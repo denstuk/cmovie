@@ -113,7 +113,7 @@ export const HomePage: FC = () => {
     return (
       <Page>
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-22 w-22 border-b-5 text-red-600"></div>
         </div>
       </Page>
     );
@@ -137,7 +137,7 @@ export const HomePage: FC = () => {
 
   return (
     <Page>
-      <h1 className="text-3xl font-bold mb-8">Video Library</h1>
+      <h1 className="text-3xl font-bold mb-8">Home</h1>
 
       {videos.length === 0 ? (
         <div className="text-center py-12">

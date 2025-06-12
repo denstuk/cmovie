@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
-import { FaSearch, FaBell } from 'react-icons/fa';
+import { useEffect, useState, useRef } from 'react';
+import { FaSearch } from 'react-icons/fa';
 import { Link } from 'react-router';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Add scroll listener
   useEffect(() => {
@@ -19,6 +20,30 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Focus the search input when the search bar appears
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSearch]);
+
+  // Handle click outside to close search
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showSearch &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node) &&
+        !(event.target as Element).closest('button')
+      ) {
+        setShowSearch(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSearch]);
 
   return (
     <header className={`fixed top-0 w-full z-50 transition-colors duration-300 ${isScrolled ? 'bg-black' : 'bg-black/50'}`}>
@@ -37,28 +62,41 @@ const Header = () => {
           <div className="relative">
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className="text-white hover:text-gray-300"
+              className="text-white hover:text-gray-300 transition-transform duration-200 ease-in-out hover:scale-110"
+              aria-label="Search"
             >
               <FaSearch size={20} />
             </button>
-            {showSearch && (
-              <div className="absolute right-0 top-10 bg-black bg-opacity-90 p-2 rounded">
-                <input
-                  type="text"
-                  placeholder="Titles, people, genres"
-                  className="bg-gray-800 text-white px-4 py-1 rounded outline-none"
-                />
+
+            <div
+              className={`absolute right-0 top-12 transform origin-top-right transition-all duration-300 ease-in-out ${
+                showSearch
+                  ? 'opacity-100 scale-100 translate-y-0'
+                  : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+              }`}
+            >
+              <div className="bg-black/80 backdrop-blur-md border border-gray-700 p-4 rounded-lg shadow-xl w-80 sm:w-96">
+                <div className="relative">
+                  <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search titles, people, genres..."
+                    className="w-full bg-gray-800/80 text-white pl-12 pr-4 py-3 text-base rounded-md outline-none ring-1 ring-gray-700 focus:ring-red-600 transition-all duration-200"
+                  />
+                </div>
+                <div className="mt-3 text-sm text-gray-400">
+                  <span>Press Enter to search</span>
+                </div>
               </div>
-            )}
+            </div>
           </div>
-          <button className="text-white hover:text-gray-300">
-            <FaBell size={20} />
-          </button>
+
           <div className="flex items-center space-x-2">
             <img
               src="https://picsum.photos/32/32"
               alt="Profile"
-              className="rounded-full w-8 h-8"
+              className="rounded-full w-8 h-8 ring-2 ring-gray-800 hover:ring-red-600 transition-all duration-200"
             />
           </div>
         </div>
