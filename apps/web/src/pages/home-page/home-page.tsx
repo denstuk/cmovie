@@ -1,25 +1,38 @@
 import { useState, useEffect } from "react";
 import type { FC } from "react";
-import { Link } from "react-router";
 import { Page } from "../page";
 import { config } from "../../config";
-
-interface VideoData {
-  video_id: string;
-  title: string;
-  description: string;
-  file_key: string;
-  upload_date: string;
-  tags: string[];
-  regions_blacklist: string[];
-}
+import { searchVideos } from "../../api/api";
+import type { Video } from "../../models/video";
+import { VideoCard } from "../../components/video-card";
+import { getSampleVideos } from "../../mocks/videos";
 
 export const HomePage: FC = () => {
-  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+
+  const [searchBy, setSearchBy] = useState<string>('');
+
+  useEffect(() => {
+    const debounceTimeout = setTimeout(() => {
+      searchVideos(searchBy).then(({ videos, nextToken }) => {
+        console.log("Videos fetched:", videos);
+        setVideos(videos || []);
+        setNextToken(nextToken || null);
+        setHasMore(Boolean(nextToken));
+        setIsLoading(false);
+      }).catch((error) => {
+        console.error("Error fetching videos:", error);
+        setError('Failed to load videos. Please try again later.');
+        setIsLoading(false);
+      });
+    }, 200);
+
+    return () => clearTimeout(debounceTimeout);
+  }, [searchBy]);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -70,45 +83,6 @@ export const HomePage: FC = () => {
     }
   };
 
-  // Fallback sample videos when API is not available
-  const getSampleVideos = () => [
-    {
-      video_id: '1',
-      title: 'Big Buck Bunny',
-      description: 'A short animated film featuring a giant rabbit',
-      file_key: 'sample/bunny.mp4',
-      upload_date: '2023-01-01T00:00:00.000Z',
-      tags: ['animation', 'comedy'],
-      regions_blacklist: []
-    },
-    {
-      video_id: '2',
-      title: 'Ocean Documentary',
-      description: 'Explore the depths of our oceans in this stunning documentary',
-      file_key: 'sample/ocean.mp4',
-      upload_date: '2023-01-02T00:00:00.000Z',
-      tags: ['documentary', 'nature'],
-      regions_blacklist: []
-    },
-    {
-      video_id: '3',
-      title: 'Mountain Adventure',
-      description: 'Follow climbers as they ascend the world\'s tallest peaks',
-      file_key: 'sample/mountain.mp4',
-      upload_date: '2023-01-03T00:00:00.000Z',
-      tags: ['adventure', 'sports'],
-      regions_blacklist: []
-    }
-  ];
-
-  // Generate a thumbnail from the file key or use a placeholder
-  const getThumbnailUrl = (fileKey: string) => {
-    // In a real implementation, you'd have a proper thumbnail generation system
-    // For now, we'll use placeholder images
-    const id = parseInt(fileKey.split('/').pop()?.split('.')[0] || '0', 10) % 20 + 100;
-    return `https://picsum.photos/id/${id}/400/250`;
-  };
-
   if (isLoading && videos.length === 0) {
     return (
       <Page>
@@ -137,42 +111,33 @@ export const HomePage: FC = () => {
 
   return (
     <Page>
-      <h1 className="text-3xl font-bold mb-8">Home</h1>
+      <h1 className="text-3xl font-bold mb-4 text-center mt-8">What would you like to watch today?</h1>
+
+      <div className="mb-16 max-w-[600px] mx-auto">
+        <div className="relative">
+          <input
+        type="text"
+        placeholder="Search videos..."
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-white focus:border-white"
+        onChange={(e) => setSearchBy(e.target.value.trim())}
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+      </div>
 
       {videos.length === 0 ? (
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold">No videos found</h2>
-          <p className="mt-2 text-gray-600">Be the first to upload a video!</p>
-          <Link to="/upload" className="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-            Upload Video
-          </Link>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {videos.map((video) => (
-              <Link
-                key={video.video_id}
-                to={`/video/${video.video_id}`}
-                className="video-card transition-transform hover:scale-105"
-              >
-                <div className="relative w-full rounded-lg overflow-hidden">
-                  <div className="aspect-video">
-                    <img
-                      src={getThumbnailUrl(video.file_key)}
-                      alt={`${video.title} thumbnail`}
-                      className="w-full h-full object-cover rounded-lg shadow-md"
-                    />
-                  </div>
-                  <div className="absolute bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent w-full">
-                    <h3 className="text-white font-semibold text-lg">{video.title}</h3>
-                    <p className="text-gray-200 text-sm line-clamp-2">{video.description}</p>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <p className="text-sm text-gray-500">{video.tags.join(', ')}</p>
-                </div>
-              </Link>
+              <VideoCard key={video.video_id} video={video} />
             ))}
           </div>
 
@@ -181,7 +146,7 @@ export const HomePage: FC = () => {
               <button
                 onClick={loadMoreVideos}
                 disabled={isLoading}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                className="px-6 py-2 bg-white-600 text-black rounded-md hover:bg-white disabled:opacity-50"
               >
                 {isLoading ? 'Loading...' : 'Load More Videos'}
               </button>

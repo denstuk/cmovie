@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from 'react';
-import { FaSearch } from 'react-icons/fa';
 import { Link } from 'react-router';
 
 const Header = () => {
@@ -59,39 +58,6 @@ const Header = () => {
 
         {/* Right section */}
         <div className="flex items-center space-x-4">
-          <div className="relative">
-            <button
-              onClick={() => setShowSearch(!showSearch)}
-              className="text-white hover:text-gray-300 transition-transform duration-200 ease-in-out hover:scale-110"
-              aria-label="Search"
-            >
-              <FaSearch size={20} />
-            </button>
-
-            <div
-              className={`absolute right-0 top-12 transform origin-top-right transition-all duration-300 ease-in-out ${
-                showSearch
-                  ? 'opacity-100 scale-100 translate-y-0'
-                  : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
-              }`}
-            >
-              <div className="bg-black/80 backdrop-blur-md border border-gray-700 p-4 rounded-lg shadow-xl w-80 sm:w-96">
-                <div className="relative">
-                  <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="Search titles, people, genres..."
-                    className="w-full bg-gray-800/80 text-white pl-12 pr-4 py-3 text-base rounded-md outline-none ring-1 ring-gray-700 focus:ring-red-600 transition-all duration-200"
-                  />
-                </div>
-                <div className="mt-3 text-sm text-gray-400">
-                  <span>Press Enter to search</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div className="flex items-center space-x-2">
             <img
               src="https://picsum.photos/32/32"

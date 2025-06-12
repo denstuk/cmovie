@@ -1,4 +1,5 @@
 import { config } from "../config";
+import type { Video } from "../models/video";
 
 /**
  * This file contains API functions for interacting with the backend services.
@@ -18,4 +19,26 @@ export const videoGeneratePresignedUrl = async (id: string, videoUrl: string): P
 
   const data = await response.json();
   return data.signedUrl;
+}
+
+
+export const searchVideos = async (searchBy: string): Promise<{
+  videos: Video[];
+  nextToken?: string;
+}> => {
+  const url = new URL(`${config.apiUrl}/videos/search`);
+  if (searchBy) {
+    url.searchParams.append('searchBy', searchBy);
+  }
+
+  const response = await fetch(url.toString(), {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to search videos: ${response.statusText}`);
+  }
+
+  return await response.json();
 }
