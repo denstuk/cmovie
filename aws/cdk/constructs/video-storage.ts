@@ -39,15 +39,8 @@ export class VideoStorage extends Construct {
       ],
     });
 
-    const rawBase64 = readFileSync(join(__dirname, '../../secrets/cf_public_key_base64.txt'), 'utf-8');
-    const pemKey = `
-    -----BEGIN PUBLIC KEY-----
-    ${rawBase64}
-    -----END PUBLIC KEY-----
-    `.trim();
-
     this.key = new cloudfront.PublicKey(this, `${Config.appName}-video-distribution-pub-key`, {
-      encodedKey: pemKey,
+      encodedKey: Config.cloudFrontPublicKey,
       comment: 'CloudFront Key for signed URLs',
     });
 

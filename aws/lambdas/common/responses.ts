@@ -1,14 +1,17 @@
-// Add CORS headers to all responses (TODO: Review from security perspective)
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-  'Access-Control-Allow-Methods': 'OPTIONS,GET,POST,PUT,DELETE',
-};
+import { DEFAULT_CORS_CONFIG } from "./constants";
 
 export const okResponse = <T>(data: T): { statusCode: number; body: string; headers: Record<string, string> } => {
   return {
     statusCode: 200,
     body: JSON.stringify(data),
-    headers,
+    headers: { ...DEFAULT_CORS_CONFIG }
+  };
+};
+
+export const errorResponse = (message: string, statusCode: number = 500): { statusCode: number; body: string; headers: Record<string, string> } => {
+  return {
+    statusCode,
+    body: JSON.stringify({ error: message }),
+    headers: { ...DEFAULT_CORS_CONFIG }
   };
 };

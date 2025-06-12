@@ -6,9 +6,7 @@ import { Config } from './config';
 
 const app = new cdk.App();
 new AwsStack(app, 'cmovie-stack', {
-  env: {
-    region: 'us-east-1',
-  }
+  env: { region: Config.awsRegion }
 });
 
 cdk.Tags.of(app).add('environment', Config.envName);
