@@ -164,8 +164,8 @@ export const VideoPage: FC = () => {
   return (
     <Page>
       <div className="max-w-full">
-        <h1 className="text-4xl font-bold text-gray-800">{videoData.title}</h1>
-        <p className="mt-4 text-lg text-gray-600">{videoData.tags.join(', ')}</p>
+        <h1 className="text-4xl font-bold text-white">{videoData.title}</h1>
+        <p className="mt-4 text-lg text-gray-100">{videoData.tags.join(', ')}</p>
 
         {/* Video container with responsive width */}
         <div className="w-full mt-4">
@@ -181,13 +181,13 @@ export const VideoPage: FC = () => {
 
         {/* Description */}
         <div className="mt-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Description</h2>
-          <p className="text-gray-700">{videoData.description || 'No description provided.'}</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Description</h2>
+          <p className="text-gray-100">{videoData.description || 'No description provided.'}</p>
         </div>
 
         {/* Comments section */}
         <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Comments</h2>
+          <h2 className="text-2xl font-bold text-gray-100 mb-4">Comments</h2>
 
           {/* Add comment form */}
           <form onSubmit={handleCommentSubmit} className="mb-6">
@@ -197,11 +197,11 @@ export const VideoPage: FC = () => {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Add a comment..."
-                className="flex-grow p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-grow p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-white"
               />
               <button
                 type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 transition"
+                className="bg-white text-black px-4 py-2 rounded-r-md hover:bg-gray-300 transition-all duration-200 cursor-pointer"
               >
                 Comment
               </button>
@@ -209,7 +209,7 @@ export const VideoPage: FC = () => {
           </form>
 
           {/* Comments list */}
-          <div className="space-y-4">
+          <div className="space-y-4 mb-10">
             {comments.map((comment) => (
               <div key={comment.id} className="p-4 bg-gray-50 rounded-md">
                 <div className="flex items-center mb-2">
