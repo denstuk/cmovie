@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { useParams } from "react-router";
 import { Page } from "../page";
 import { config } from "../../config";
+import { videoGeneratePresignedUrl } from "../../api/api";
 
 interface VideoData {
   video_id: string;
@@ -35,6 +36,7 @@ export const VideoPage: FC = () => {
     {id: '1', text: 'Great video! Love the content.', author: 'User1', date: '2 days ago'},
     {id: '2', text: 'Very informative!', author: 'User2', date: '1 day ago'},
   ]);
+  const [signedVideoUrl, setSignedVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchVideoData = async () => {
@@ -53,6 +55,12 @@ export const VideoPage: FC = () => {
 
         const data = await response.json();
         setVideoData(data.video);
+
+        const videoUrl = getVideoUrl(data.video.file_key);
+        const signedUrl = await videoGeneratePresignedUrl('1', videoUrl);
+        console.log(`Signed URL: ${signedUrl}`);
+        setSignedVideoUrl(signedUrl)
+
       } catch (err) {
         console.error("Error fetching video data:", err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -137,7 +145,7 @@ export const VideoPage: FC = () => {
     );
   }
 
-  if (error || !videoData) {
+  if (error || !videoData || !signedVideoUrl) {
     return (
       <Page>
         <div className="text-center py-12">
@@ -166,7 +174,7 @@ export const VideoPage: FC = () => {
             controls
             ref={videoRef}
           >
-            <source src={getVideoUrl(videoData.file_key)} type="video/mp4" />
+            <source src={signedVideoUrl} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
         </div>

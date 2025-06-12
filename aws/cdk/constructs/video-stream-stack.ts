@@ -7,6 +7,10 @@ import { Construct } from "constructs";
 import { Config } from "../config";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { VideoStorage } from "./video-storage";
+import { readFileSync } from "fs";
+import { join } from "path";
+
+// Align names between lambdas and operations: Replace somewhere get with generate
 
 export class VideoStreamStack extends Construct {
   readonly apiEndpoint: string;
@@ -86,6 +90,21 @@ export class VideoStreamStack extends Construct {
       videoTable.grantReadData(getVideoByIdFn); // Grant read-only permissions
       const getVideoByIdIntegration = new apigateway.LambdaIntegration(getVideoByIdFn);
 
+      // Lambda function for generating signed URLs for video playback
+      const getPresignedVideoUrlFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-get-presigned-url-fn`, {
+        entry: 'lambdas/video-get-presigned-url-fn/index.ts',
+        handler: 'handler',
+        logRetention: RetentionDays.ONE_DAY,
+        environment: {
+          CF_KEY_PAIR_ID: videoStorage.key.publicKeyId,
+          CF_PRIVATE_KEY: readFileSync(join(__dirname, '../../secrets/cf_private_key.pem'), 'utf-8'),
+        },
+        timeout: Duration.seconds(30),
+      });
+      const getPresignedVideoUrlFnIntegration = new apigateway.LambdaIntegration(getPresignedVideoUrlFn);
+
+
+
       // Create API resources and methods
       const videosResource = api.root.addResource('videos');
       const searchResource = videosResource.addResource('search');
@@ -93,12 +112,14 @@ export class VideoStreamStack extends Construct {
       const presignedUrlResource = uploadResource.addResource('presigned-url');
       const metadataResource = videosResource.addResource('metadata');
       const videoByIdResource = videosResource.addResource('{id}');
+      const videoByIdPresignedUrlResource = videoByIdResource.addResource('presigned-url');
 
       // Set up API endpoints
       presignedUrlResource.addMethod('POST', getPresignedUploadUrlIntegration); // Generate presigned URL
       metadataResource.addMethod('PUT', setVideoMetaIntegration); // Set video metadata
       searchResource.addMethod('GET', videoSearchIntegration); // Search all videos
       videoByIdResource.addMethod('GET', getVideoByIdIntegration); // Get single video by ID
+      videoByIdPresignedUrlResource.addMethod('POST', getPresignedVideoUrlFnIntegration); // Get presigned video URL
 
       // Create an IAM policy that allows the presigned URL Lambda to invalidate CloudFront
       const cloudfrontInvalidationPolicy = new iam.PolicyStatement({

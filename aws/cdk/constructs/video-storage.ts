@@ -4,10 +4,13 @@ import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Construct } from "constructs";
 import { Config } from "../config";
 import { RemovalPolicy } from "aws-cdk-lib";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 export class VideoStorage extends Construct {
   readonly s3: Bucket;
   readonly distribution: cloudfront.Distribution;
+  readonly key: cloudfront.PublicKey;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -36,15 +39,33 @@ export class VideoStorage extends Construct {
       ],
     });
 
+    const rawBase64 = readFileSync(join(__dirname, '../../secrets/cf_public_key_base64.txt'), 'utf-8');
+    const pemKey = `
+    -----BEGIN PUBLIC KEY-----
+    ${rawBase64}
+    -----END PUBLIC KEY-----
+    `.trim();
+
+    this.key = new cloudfront.PublicKey(this, `${Config.appName}-video-distribution-pub-key`, {
+      encodedKey: pemKey,
+      comment: 'CloudFront Key for signed URLs',
+    });
+
+    const keyGroup = new cloudfront.KeyGroup(this, `${Config.appName}-video-distribution-group-key`, {
+      items: [this.key],
+      comment: 'Key group for trusted signers',
+    });
+
     // CloudFront Distribution for S3 Bucket
     this.distribution = new cloudfront.Distribution(this, `${Config.appName}-video-distribution`, {
       defaultBehavior: {
-      origin: new cloudfront_origins.S3Origin(this.s3),
-      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-      allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
-      cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD,
-      compress: true,
-      cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        origin: new cloudfront_origins.S3Origin(this.s3),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
+        cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD,
+        compress: true,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        trustedKeyGroups: [keyGroup],
       },
       comment: `${Config.appName} - Video Distribution`,
       priceClass: cloudfront.PriceClass.PRICE_CLASS_100,

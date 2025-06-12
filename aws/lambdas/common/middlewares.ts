@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 type LambdaFn = (event: APIGatewayProxyEvent) => Promise<APIGatewayProxyResult>;
 
-export function errorHandler(fn: LambdaFn): LambdaFn {
+export function errorMiddleware(fn: LambdaFn): LambdaFn {
   return async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     try {
       return await fn(event);
