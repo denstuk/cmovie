@@ -1,44 +1,20 @@
-import { CfnOutput, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
-import { BlockPublicAccess, Bucket, HttpMethods } from "aws-cdk-lib/aws-s3";
+import { CfnOutput, Duration, RemovalPolicy } from "aws-cdk-lib";
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Construct } from "constructs";
 import { Config } from "../config";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import { VideoStorage } from "./video-storage";
 
-export class VideoStorageS3 extends Construct {
-  readonly s3Bucket: Bucket;
+export class VideoStreamStack extends Construct {
   readonly apiEndpoint: string;
-  readonly distribution: cloudfront.Distribution;
 
     constructor(scope: Construct, id: string) {
       super(scope, id);
 
-      // S3 Bucket for Videos
-      this.s3Bucket = new Bucket(this, `${Config.appName}-video-s3`, {
-        publicReadAccess: false,
-        removalPolicy: RemovalPolicy.DESTROY,
-        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-        autoDeleteObjects: true,
-        versioned: true,
-        cors: [
-          {
-            allowedMethods: [
-              HttpMethods.GET,
-              HttpMethods.PUT,
-              HttpMethods.POST,
-              HttpMethods.HEAD,
-            ],
-            allowedOrigins: ['*'],
-            allowedHeaders: ['*'],
-            exposedHeaders: ['ETag'],
-          },
-        ],
-      });
+      const videoStorage = new VideoStorage(scope, `${Config.appName}-video-storage`);
 
       // DynamoDB for Video Metadata
       const videoTable = new dynamodb.Table(this, `${Config.appName}-videos-table`, {
@@ -63,12 +39,12 @@ export class VideoStorageS3 extends Construct {
         handler: 'handler',
         logRetention: RetentionDays.ONE_DAY,
         environment: {
-          BUCKET_NAME: this.s3Bucket.bucketName,
+          BUCKET_NAME: videoStorage.s3.bucketName,
           DISTRIBUTION_ID: '', // Will be updated after distribution is created
         },
         timeout: Duration.seconds(30),
       });
-      this.s3Bucket.grantReadWrite(getPresignedUploadUrlFn); // Grant permissions to read/write to the S3 bucket
+      videoStorage.s3.grantReadWrite(getPresignedUploadUrlFn); // Grant permissions to read/write to the S3 bucket
       const getPresignedUploadUrlIntegration = new apigateway.LambdaIntegration(getPresignedUploadUrlFn);
 
       // Lambda function for updating video metadata
@@ -124,23 +100,6 @@ export class VideoStorageS3 extends Construct {
       searchResource.addMethod('GET', videoSearchIntegration); // Search all videos
       videoByIdResource.addMethod('GET', getVideoByIdIntegration); // Get single video by ID
 
-      // CloudFront Distribution for video content - enhanced for public access
-      this.distribution = new cloudfront.Distribution(this, `${Config.appName}-cloudfront`, {
-        defaultBehavior: {
-          origin: new cloudfront_origins.S3Origin(this.s3Bucket),
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
-          cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD,
-          compress: true,
-          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-        },
-        priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
-        enabled: true,
-        httpVersion: cloudfront.HttpVersion.HTTP2,
-        defaultRootObject: 'index.html',
-        enableIpv6: true,
-      });
-
       // Create an IAM policy that allows the presigned URL Lambda to invalidate CloudFront
       const cloudfrontInvalidationPolicy = new iam.PolicyStatement({
         actions: ['cloudfront:CreateInvalidation'],
@@ -149,14 +108,14 @@ export class VideoStorageS3 extends Construct {
 
       // Add this policy to the Lambda's role
       setVideoMetaFn.addToRolePolicy(cloudfrontInvalidationPolicy);
-      setVideoMetaFn.addEnvironment('DISTRIBUTION_ID', this.distribution.distributionId);
+      setVideoMetaFn.addEnvironment('DISTRIBUTION_ID', videoStorage.distribution.distributionId);
 
       // Store the API endpoint URL for reference
       this.apiEndpoint = api.url;
 
       // Outputs
       new CfnOutput(this, `${Config.appName}-video-s3-url`, {
-        value: this.s3Bucket.bucketWebsiteUrl,
+        value: videoStorage.s3.bucketWebsiteUrl,
       });
 
       new CfnOutput(this, `${Config.appName}-api-url`, {
@@ -164,11 +123,11 @@ export class VideoStorageS3 extends Construct {
       });
 
       new CfnOutput(this, `${Config.appName}-distribution-domain`, {
-        value: this.distribution.domainName,
+        value: videoStorage.distribution.domainName,
       });
 
       new CfnOutput(this, `${Config.appName}-distribution-id`, {
-        value: this.distribution.distributionId,
+        value: videoStorage.distribution.distributionId,
       });
     }
 }

@@ -2,13 +2,13 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { WebDeployment } from './constructs/web-deployment';
 import { Config } from './config';
-import { VideoStorageS3 } from './constructs/video-storage-s3';
+import { VideoStreamStack } from './constructs/video-stream-stack';
 
 export class AwsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    new VideoStorageS3(this, `${Config.appName}-video-storage-s3`);
+    new VideoStreamStack(this, `${Config.appName}-video-stream-stack`);
     new WebDeployment(this, `${Config.appName}-web-deployment`);
   }
 }
