@@ -4,23 +4,10 @@ import { useParams } from "react-router";
 import { Page } from "../page";
 import { config } from "../../config";
 import { videoGeneratePresignedUrl } from "../../api/api";
-
-interface VideoData {
-  video_id: string;
-  title: string;
-  description: string;
-  file_key: string;
-  upload_date: string;
-  tags: string[];
-  regions_blacklist: string[];
-}
-
-interface Comment {
-  id: string;
-  text: string;
-  author: string;
-  date: string;
-}
+import { toast } from "sonner";
+import { PageLoader } from "../../components/page-loader";
+import type { Video } from "../../models/video";
+import type { Comment } from "../../models/comment";
 
 export const VideoPage: FC = () => {
   const { videoId } = useParams<{ videoId: string }>();
@@ -28,7 +15,7 @@ export const VideoPage: FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const VIDEO_PROGRESS_KEY = `video-progress-${videoId}`;
 
-  const [videoData, setVideoData] = useState<VideoData | null>(null);
+  const [videoData, setVideoData] = useState<Video | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [comment, setComment] = useState<string>('');
@@ -123,6 +110,12 @@ export const VideoPage: FC = () => {
     setComment('');
   };
 
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => toast.info('URL copied to clipboard!'))
+      .catch((err) => toast.error('Failed to copy URL: ' + err));
+  };
+
   // Get the video URL from the file_key
   const getVideoUrl = (fileKey: string) => {
     // For testing fallback
@@ -138,9 +131,7 @@ export const VideoPage: FC = () => {
   if (isLoading) {
     return (
       <Page>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        </div>
+        <PageLoader />
       </Page>
     );
   }
@@ -152,7 +143,7 @@ export const VideoPage: FC = () => {
           <h2 className="text-xl font-semibold text-red-600">{error || 'Video not found'}</h2>
           <button
             onClick={() => window.location.href = '/'}
-            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            className="mt-4 px-4 py-2 bg-white text-black rounded-md hover:bg-gray-400 cursor-pointer"
           >
             Back to Home
           </button>
@@ -164,7 +155,18 @@ export const VideoPage: FC = () => {
   return (
     <Page>
       <div className="max-w-full">
-        <h1 className="text-4xl font-bold text-white">{videoData.title}</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-bold text-white">{videoData.title}</h1>
+          <button
+            onClick={handleShare}
+            className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-all cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+            </svg>
+            Share
+          </button>
+        </div>
         <p className="mt-4 text-lg text-gray-100">{videoData.tags.join(', ')}</p>
 
         {/* Video container with responsive width */}

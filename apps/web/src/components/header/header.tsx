@@ -45,12 +45,12 @@ const Header = () => {
   }, [showSearch]);
 
   return (
-    <header className={`fixed top-0 w-full z-50 transition-colors duration-300 ${isScrolled ? 'bg-black' : 'bg-black/50'}`}>
+    <header className={`fixed top-0 w-full z-50 transition-colors duration-300 ${isScrolled ? 'bg-black' : 'bg-transparent'}`}>
       <div className="px-4 py-3 lg:px-8 flex items-center justify-between">
         {/* Left section */}
         <div className="flex items-center space-x-8">
           <h1 className="text-red-600 text-2xl font-bold">CMOVIE</h1>
-          <nav className="hidden md:flex space-x-4">
+          <nav className="md:flex space-x-4">
             <Link to="/" className="text-white hover:text-gray-300">Home</Link>
             <Link to="/upload" className="text-white hover:text-gray-300">Upload</Link>
           </nav>

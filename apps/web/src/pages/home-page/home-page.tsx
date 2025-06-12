@@ -6,6 +6,7 @@ import { searchVideos } from "../../api/api";
 import type { Video } from "../../models/video";
 import { VideoCard } from "../../components/video-card";
 import { getSampleVideos } from "../../mocks/videos";
+import { PageLoader } from "../../components/page-loader";
 
 export const HomePage: FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
@@ -86,9 +87,7 @@ export const HomePage: FC = () => {
   if (isLoading && videos.length === 0) {
     return (
       <Page>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-22 w-22 border-b-5 text-red-600"></div>
-        </div>
+        <PageLoader />
       </Page>
     );
   }
@@ -100,7 +99,7 @@ export const HomePage: FC = () => {
           <h2 className="text-xl font-semibold text-red-600">{error}</h2>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            className="mt-4 px-4 py-2 bg-white text-black rounded-md hover:bg-gray-400"
           >
             Retry
           </button>
