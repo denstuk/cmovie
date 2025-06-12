@@ -17,7 +17,11 @@ export const videoGeneratePresignedUrl = async (
 	});
 
 	if (!response.ok) {
-		throw new Error(`Failed to generate presigned URL: ${response.statusText}`);
+    if (response.headers.get("Content-Type")?.includes("application/json")) {
+      const errorData: { message?: string } = await response.json();
+      throw new Error(errorData?.message || 'Failed to generate presigned URL');
+    }
+		throw new Error("Failed to generate presigned URL");
 	}
 
 	const data = await response.json();

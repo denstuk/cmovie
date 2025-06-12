@@ -49,7 +49,7 @@ export const VideoPage: FC = () => {
 				setVideoData(data.video);
 
 				const videoUrl = getVideoUrl(data.video.file_key);
-				const signedUrl = await videoGeneratePresignedUrl("1", videoUrl);
+				const signedUrl = await videoGeneratePresignedUrl(data.video.video_id, videoUrl);
 				console.log(`Signed URL: ${signedUrl}`);
 				setSignedVideoUrl(signedUrl);
 			} catch (err) {
@@ -57,20 +57,6 @@ export const VideoPage: FC = () => {
 				setError(
 					err instanceof Error ? err.message : "An unknown error occurred",
 				);
-
-				// Fallback data for testing when API is not available
-				if (videoId === "1") {
-					setVideoData({
-						video_id: "1",
-						title: "Big Buck Bunny",
-						description: "A short animated film featuring a giant rabbit",
-						file_key: "sample/bunny.mp4",
-						upload_date: "2023-01-01T00:00:00.000Z",
-						tags: ["animation", "comedy"],
-						regions_blacklist: [],
-					});
-					setError(null);
-				}
 			} finally {
 				setIsLoading(false);
 			}

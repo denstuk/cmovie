@@ -14,7 +14,7 @@ export class AwsStack extends cdk.Stack {
       maxAzs: 2,
     });
 
-    const videoStorage = new VideoStorage(scope, `${Config.appName}-video-storage`);
+    const videoStorage = new VideoStorage(this, `${Config.appName}-video-storage`);
 
     new VideoApi(this, `${Config.appName}-video-stream-stack`, {
       videoStorage,

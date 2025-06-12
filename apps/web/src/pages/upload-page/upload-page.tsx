@@ -2,20 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent, FC, FormEvent } from "react";
 import { config } from "../../config";
 import { Page } from "../page";
-
-// List of countries for the blocklist selection
-const COUNTRIES = [
-	"United States",
-	"Canada",
-	"United Kingdom",
-	"Australia",
-	"Germany",
-	"France",
-	"Japan",
-	"Brazil",
-	"India",
-	"China",
-];
+import { COUNTRIES } from "../../constants/countries";
 
 export const UploadPage: FC = () => {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);

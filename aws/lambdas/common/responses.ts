@@ -15,3 +15,11 @@ export const errorResponse = (message: string, statusCode: number = 500): { stat
     headers: { ...DEFAULT_CORS_CONFIG }
   };
 };
+
+export const notFoundResponse = (message: string): { statusCode: number; body: string; headers: Record<string, string> } => {
+  return {
+    statusCode: 404,
+    body: JSON.stringify({ error: message }),
+    headers: { ...DEFAULT_CORS_CONFIG }
+  };
+};

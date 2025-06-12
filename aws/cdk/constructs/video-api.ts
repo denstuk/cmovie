@@ -3,6 +3,8 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Construct } from "constructs";
 import { Config } from "../config";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
@@ -35,6 +37,19 @@ export class VideoApi extends Construct {
           allowOrigins: apigateway.Cors.ALL_ORIGINS,
           allowMethods: apigateway.Cors.ALL_METHODS,
         },
+      });
+
+      // CloudFront distribution for API Gateway
+      const distribution = new cloudfront.Distribution(this, `${Config.appName}-api-distribution`, {
+        defaultBehavior: {
+          origin: new cloudfront_origins.RestApiOrigin(api, {
+            originPath: '/',
+          }),
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
+        },
+        defaultRootObject: '',
       });
 
       const videoCreateUploadSignedUrlFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-create-upload-signed-url-fn`, {
@@ -102,9 +117,11 @@ export class VideoApi extends Construct {
         environment: {
           CF_KEY_PAIR_ID: videoStorage.key.publicKeyId,
           CF_PRIVATE_KEY: Config.cloudFrontPrivateKey,
+          TABLE_NAME: videoTable.tableName,
         },
         timeout: Duration.seconds(30),
       });
+      videoTable.grantReadData(videoCreateViewSignedUrlFn); // Grant read-only permissions
       const videoCreateViewSignedUrlFnIntegration = new apigateway.LambdaIntegration(videoCreateViewSignedUrlFn);
 
       // Create API resources and methods
@@ -152,6 +169,10 @@ export class VideoApi extends Construct {
       new CfnOutput(this, `${Config.appName}-distribution-id`, {
         description: 'CloudFront distribution ID for video streaming',
         value: videoStorage.distribution.distributionId,
+      });
+      new CfnOutput(this, `${Config.appName}-cloudfront-api-url`, {
+        description: 'CloudFront URL that fronts API Gateway',
+        value: distribution.domainName,
       });
     }
 }
