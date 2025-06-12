@@ -1,0 +1,28 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.1.1 Chrome/132.0.6834.210 Electron/34.3.3 Safari/537.36" version="26.1.1">
+  <diagram name="Page-1" id="Yus2j_9Mw1io1Vl5Ufiu">
+    <mxGraphModel dx="1061" dy="850" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ANkwzQRA43zdDnE30-9h-1" value="System Flows:" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="29" y="22" width="265" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ANkwzQRA43zdDnE30-9h-2" value="Upload Video" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="162" y="87" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ANkwzQRA43zdDnE30-9h-3" value="Set Metadata (+cache invalidation)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="162" y="164" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ANkwzQRA43zdDnE30-9h-4" value="Search Videos" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="162" y="241" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ANkwzQRA43zdDnE30-9h-5" value="Open and Watch video" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="162" y="318" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ANkwzQRA43zdDnE30-9h-6" value="Put comments" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="162" y="395" width="120" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
