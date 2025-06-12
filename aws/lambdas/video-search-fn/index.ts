@@ -1,97 +1,86 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { z } from 'zod';
+import { errorMiddleware } from '../common/middlewares';
+import { okResponse } from '../common/responses';
 
 const dynamoClient = new DynamoDBClient({ region: 'us-east-1' });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  // Add CORS headers to all responses
+// Zod schema for query parameters
+const QuerySchema = z.object({
+  limit: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => !isNaN(val) && val > 0 && val <= 100, {
+      message: 'limit must be a number between 1 and 100',
+    })
+    .optional(),
+  startFrom: z.string().optional(),
+  searchBy: z.string().trim().toLowerCase().optional(),
+});
+
+const _handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Allow-Methods': 'OPTIONS,GET'
+    'Access-Control-Allow-Methods': 'OPTIONS,GET',
   };
 
-  // Handle CORS preflight requests
-  if (event.httpMethod === 'OPTIONS') {
+  const rawParams = event.queryStringParameters || {};
+
+  // Parse and validate query params
+  const parsed = QuerySchema.safeParse(rawParams);
+  if (!parsed.success) {
     return {
-      statusCode: 200,
+      statusCode: 400,
       headers,
-      body: JSON.stringify({ message: 'CORS enabled' }),
+      body: JSON.stringify({ error: parsed.error.format() }),
     };
   }
 
-  try {
-    // Get all videos
-    if (event.httpMethod === 'GET') {
-      // Extract query parameters for filtering and pagination
-      const queryParams = event.queryStringParameters || {};
+  const { limit = 20, startFrom, searchBy } = parsed.data;
 
-      const scanParams: any = {
-        TableName: process.env.TABLE_NAME,
-      };
+  const scanParams: any = {
+    TableName: process.env.TABLE_NAME,
+    Limit: limit,
+  };
 
-      // Optional: Add pagination support
-      if (queryParams.lastKey) {
-        try {
-          scanParams.ExclusiveStartKey = JSON.parse(
-            Buffer.from(queryParams.lastKey, 'base64').toString()
-          );
-        } catch (e) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({
-              error: 'Invalid pagination token',
-            }),
-          };
-        }
-      }
-
-      // Optional: Set a limit on number of items returned
-      if (queryParams.limit) {
-        const limit = parseInt(queryParams.limit, 10);
-        if (!isNaN(limit) && limit > 0) {
-          scanParams.Limit = Math.min(limit, 100); // Capping at 100 for performance
-        }
-      }
-
-      // Execute the scan operation
-      const result = await docClient.send(new ScanCommand(scanParams));
-
-      // Prepare pagination token if there are more results
-      let nextToken = null;
-      if (result.LastEvaluatedKey) {
-        nextToken = Buffer.from(
-          JSON.stringify(result.LastEvaluatedKey)
-        ).toString('base64');
-      }
-
+  // Pagination token decoding
+  if (startFrom) {
+    try {
+      scanParams.ExclusiveStartKey = JSON.parse(Buffer.from(startFrom, 'base64').toString());
+    } catch {
       return {
-        statusCode: 200,
+        statusCode: 400,
         headers,
-        body: JSON.stringify({
-          videos: result.Items,
-          nextToken,
-        }),
+        body: JSON.stringify({ error: 'Invalid pagination token' }),
       };
     }
-
-    // Default response for undefined routes
-    return {
-      statusCode: 404,
-      headers,
-      body: JSON.stringify({ error: 'Not found' }),
-    };
-  } catch (error) {
-    console.error('Error processing request:', error);
-
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    };
   }
+
+  const result = await docClient.send(new ScanCommand(scanParams));
+  let items = result.Items || [];
+
+  // If searchBy is provided, filter by name, description, or tags (case-insensitive)
+  if (searchBy) {
+    const keyword = searchBy.toLowerCase();
+
+    items = items.filter((item: any) => {
+      const title = item.title?.toLowerCase() || '';
+      const desc = item.description?.toLowerCase() || '';
+      const tags = (item.tags || []).map((tag: string) => tag.toLowerCase()).join(' ');
+
+      return title.includes(keyword) || desc.includes(keyword) || tags.includes(keyword);
+    });
+  }
+
+  const nextToken = result.LastEvaluatedKey
+    ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+    : null;
+
+  return okResponse({ videos: items, nextToken });
 };
 
+export const handler = errorMiddleware(_handler);

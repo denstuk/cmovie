@@ -2,11 +2,12 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { CloudFrontClient, CreateInvalidationCommand } from "@aws-sdk/client-cloudfront";
+import { errorMiddleware } from '../common/middlewares';
 
 const dynamoClient = new DynamoDBClient({ region: 'us-east-1' });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+const _handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   // Add CORS headers to all responses
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -14,19 +15,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     'Access-Control-Allow-Methods': 'OPTIONS,PUT,GET'
   };
 
-  // Handle CORS preflight requests
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ message: 'CORS enabled' }),
-    };
-  }
-
-  try {
-    // Set video metadata endpoint
-    if (event.httpMethod === 'PUT') {
-      const requestBody = JSON.parse(event.body || '{}');
+  const requestBody = JSON.parse(event.body || '{}');
       const { videoId, title, description, tags, blockedCountries, fileKey } = requestBody;
 
       if (!videoId || !title) {
@@ -102,21 +91,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
           videoId,
         }),
       };
-    }
-
-    // Default response for undefined routes
-    return {
-      statusCode: 404,
-      headers,
-      body: JSON.stringify({ error: 'Not found' }),
-    };
-  } catch (error) {
-    console.error('Error processing request:', error);
-
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    };
-  }
 };
+
+export const handler = errorMiddleware(_handler);

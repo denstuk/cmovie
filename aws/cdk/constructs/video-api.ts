@@ -8,13 +8,17 @@ import { Config } from "../config";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { VideoStorage } from "./video-storage";
 
-export class VideoStreamStack extends Construct {
+type VideoApiProps = {
+  videoStorage: VideoStorage;
+};
+
+export class VideoApi extends Construct {
   readonly apiEndpoint: string;
 
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, props: VideoApiProps) {
       super(scope, id);
 
-      const videoStorage = new VideoStorage(scope, `${Config.appName}-video-storage`);
+      const { videoStorage } = props;
 
       // DynamoDB for Video Metadata
       const videoTable = new dynamodb.Table(this, `${Config.appName}-videos-table`, {
