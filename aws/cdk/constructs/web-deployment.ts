@@ -6,21 +6,31 @@ import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { AllowedMethods, Distribution, OriginAccessIdentity, PriceClass, SecurityPolicyProtocol, ViewerProtocolPolicy } from "aws-cdk-lib/aws-cloudfront";
 import { S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
 
+export type WebDeploymentProps = {
+  name: string;
+  webBuildPath: string;
+};
+
 export class WebDeployment extends Construct {
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, props: WebDeploymentProps) {
       super(scope, id);
 
-      const s3Bucket = new Bucket(this, `${Config.appName}-web-s3`, {
+      const { name, webBuildPath } = props;
+      const prefix = `${Config.appName}-${name}`;
+
+      const s3Bucket = new Bucket(this, `${prefix}-web-s3`, {
+        bucketName: `${prefix}-bucket`,
         publicReadAccess: false,
         removalPolicy: RemovalPolicy.DESTROY,
         blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
         autoDeleteObjects: true,
       });
 
-      const oai = new OriginAccessIdentity(this, `${Config.appName}-oai`);
+      const oai = new OriginAccessIdentity(this, `${prefix}-oai`);
       s3Bucket.grantRead(oai);
 
-      const distribution = new Distribution(this, `${Config.appName}-cloudfront-distribution`, {
+      const distribution = new Distribution(this, `${prefix}-cloudfront-distribution`, {
+        comment: `${prefix} - CloudFront Distribution`,
         defaultRootObject: 'index.html',
         minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
         defaultBehavior: {
@@ -34,17 +44,17 @@ export class WebDeployment extends Construct {
         priceClass: PriceClass.PRICE_CLASS_100,
       });
 
-      new BucketDeployment(this, `${Config.appName}-s3-deployment`, {
-        sources: [Source.asset(Config.webBuildPath)],
+      new BucketDeployment(this, `${prefix}-s3-deployment`, {
+        sources: [Source.asset(webBuildPath)],
         destinationBucket: s3Bucket,
         distribution,
         distributionPaths: ['/*'],
       });
 
-      new CfnOutput(this, `${Config.appName}-s3-url`, {
+      new CfnOutput(this, `${prefix}-s3-url`, {
         value: s3Bucket.bucketWebsiteUrl,
       });
-      new CfnOutput(this, `${Config.appName}-distribution-name`, {
+      new CfnOutput(this, `${prefix}-distribution-name`, {
         value: distribution.distributionDomainName,
       });
     }

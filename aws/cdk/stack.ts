@@ -20,6 +20,13 @@ export class AwsStack extends cdk.Stack {
       videoStorage,
     });
 
-    new WebDeployment(this, `${Config.appName}-web-deployment`);
+    new WebDeployment(this, `${Config.appName}-web-deployment`, {
+      name: 'web',
+      webBuildPath: Config.webBuildPath,
+    });
+    new WebDeployment(this, `${Config.appName}-admin-ui-deployment`, {
+      name: 'admin-ui',
+      webBuildPath: Config.adminUiBuildPath,
+    });
   }
 }

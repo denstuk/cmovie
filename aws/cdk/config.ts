@@ -7,7 +7,10 @@ export class Config {
   static readonly project = 'cmovie';
   static readonly envName = process.env.ENVIRONMENT || 'dev';
   static readonly appName = `${Config.project}-${Config.envName}`;
+
   static readonly webBuildPath = '../apps/web/dist';
+  static readonly adminUiBuildPath = '../apps/admin-ui/dist';
+  static readonly backendPath = join(__dirname, '../../../apps/backend');
 
   static get cloudFrontPublicKey(): string {
     const cfPublicKeyPath = process.env.CF_PUBLIC_KEY_PATH;

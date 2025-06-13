@@ -151,10 +151,14 @@ export const HomePage: FC = () => {
 				</div>
 			) : (
 				<>
-					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-						{videos.map((video) => (
-							<VideoCard key={video.video_id} video={video} />
-						))}
+					<div className="container mx-auto px-4">
+						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+							{videos.map((video) => (
+								<div className="flex justify-center">
+									<VideoCard key={video.video_id} video={video} />
+								</div>
+							))}
+						</div>
 					</div>
 
 					{hasMore && (
