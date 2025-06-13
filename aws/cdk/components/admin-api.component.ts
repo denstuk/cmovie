@@ -8,16 +8,16 @@ import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Construct } from "constructs";
 import { Config } from "../config";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
-import { VideoStorage } from "./video-storage";
+import { VideoStorage } from "../constructs/video-storage";
 
-type VideoApiProps = {
+type AdminApiComponentProps = {
   videoStorage: VideoStorage;
 };
 
-export class VideoApi extends Construct {
+export class AdminApiComponent extends Construct {
   readonly apiEndpoint: string;
 
-    constructor(scope: Construct, id: string, props: VideoApiProps) {
+    constructor(scope: Construct, id: string, props: AdminApiComponentProps) {
       super(scope, id);
 
       const { videoStorage } = props;
@@ -40,7 +40,9 @@ export class VideoApi extends Construct {
       });
 
       // CloudFront distribution for API Gateway
+      // TODO: API must be accessible ONLY via CloudFront
       const distribution = new cloudfront.Distribution(this, `${Config.appName}-api-distribution`, {
+        comment: `${Config.appName} Admin API Distribution`,
         defaultBehavior: {
           origin: new cloudfront_origins.RestApiOrigin(api, {
             originPath: '/',
@@ -55,7 +57,7 @@ export class VideoApi extends Construct {
       const videoCreateUploadSignedUrlFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-create-upload-signed-url-fn`, {
         functionName: `${Config.appName}-video-create-upload-signed-url-fn`,
         description: 'Lambda function to generate presigned URLs for video uploads',
-        entry: 'lambdas/video-create-upload-signed-url-fn/index.ts',
+        entry: 'admin-api/lambdas/video-create-upload-signed-url-fn/index.ts',
         handler: 'handler',
         logRetention: RetentionDays.ONE_DAY,
         timeout: Duration.seconds(2),
@@ -69,7 +71,7 @@ export class VideoApi extends Construct {
       const videoSetMetadataFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-set-metadata-fn`, {
         functionName: `${Config.appName}-video-set-metadata-fn`,
         description: 'Lambda function to set video metadata',
-        entry: 'lambdas/video-set-metadata-fn/index.ts',
+        entry: 'admin-api/lambdas/video-set-metadata-fn/index.ts',
         handler: 'handler',
         logRetention: RetentionDays.ONE_DAY,
         timeout: Duration.seconds(2),
@@ -83,7 +85,7 @@ export class VideoApi extends Construct {
       const videoSearchFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-search-fn`, {
         functionName: `${Config.appName}-video-search-fn`,
         description: 'Lambda function to search videos by title, description, or tags',
-        entry: 'lambdas/video-search-fn/index.ts',
+        entry: 'admin-api/lambdas/video-search-fn/index.ts',
         handler: 'handler',
         logRetention: RetentionDays.ONE_DAY,
         timeout: Duration.seconds(2),
@@ -97,7 +99,7 @@ export class VideoApi extends Construct {
       const videoGetByIdFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-get-by-id-fn`, {
         functionName: `${Config.appName}-video-get-by-id`,
         description: 'Lambda function to get video metadata by ID',
-        entry: 'lambdas/video-get-by-id-fn/index.ts',
+        entry: 'admin-api/lambdas/video-get-by-id-fn/index.ts',
         handler: 'handler',
         logRetention: RetentionDays.ONE_DAY,
         timeout: Duration.seconds(2),
@@ -111,7 +113,7 @@ export class VideoApi extends Construct {
       const videoCreateViewSignedUrlFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-create-view-signed-url-fn`, {
         functionName: `${Config.appName}-video-create-view-signed-url-fn`,
         description: 'Lambda function to generate presigned URLs for viewing videos',
-        entry: 'lambdas/video-create-view-signed-url-fn/index.ts',
+        entry: 'admin-api/lambdas/video-create-view-signed-url-fn/index.ts',
         handler: 'handler',
         logRetention: RetentionDays.ONE_DAY,
         environment: {

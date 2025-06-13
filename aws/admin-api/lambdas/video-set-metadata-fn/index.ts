@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { CloudFrontClient, CreateInvalidationCommand } from "@aws-sdk/client-cloudfront";
-import { errorMiddleware } from '../common/middlewares';
+import { errorMiddleware } from '../../common/middlewares';
 
 const dynamoClient = new DynamoDBClient({ region: 'us-east-1' });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);

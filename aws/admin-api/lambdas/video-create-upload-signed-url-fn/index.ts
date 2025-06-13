@@ -2,9 +2,9 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
-import { errorMiddleware } from '../common/middlewares';
-import { okResponse } from '../common/responses';
-import { DEFAULT_UPLOAD_SIGNED_URL_EXPIRATION } from '../common/constants';
+import { errorMiddleware } from '../../common/middlewares';
+import { okResponse } from '../../common/responses';
+import { DEFAULT_UPLOAD_SIGNED_URL_EXPIRATION } from '../../common/constants';
 
 const s3Client = new S3Client({ region: 'us-east-1' });
 
