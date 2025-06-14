@@ -7,3 +7,14 @@ export interface Video {
 	tags: string[];
 	regions_blacklist: string[];
 }
+
+export interface VideoV2 {
+	id: string;
+	title: string;
+	description: string;
+	fileKey: string;
+	tags: string[];
+	regionsBlacklist: string[];
+	createdAt: string;
+	updatedAt: string;
+}

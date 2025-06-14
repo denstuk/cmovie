@@ -16,6 +16,7 @@ export class UserApiComponent extends Construct {
       vpc,
       imagePath: Config.backendPath,
       containerPort: 3000,
+      cloudfrontHeaderValue: Config.cloudFrontAuthHeaderValue,
       environment: {
         "DB_HOST": process.env.USER_API_DB_HOST as string,
         "DB_PORT": process.env.USER_API_DB_PORT as string,

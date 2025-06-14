@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import Header from "../components/header/header";
+import Header from "../header/header";
 
 type PageProps = {
 	children?: React.ReactNode;

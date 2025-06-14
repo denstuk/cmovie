@@ -1,5 +1,6 @@
 import { config } from "../config";
 import type { Video } from "../models/video";
+import type { Paginated, UserInfo, VideoCommentDto, VideoDto } from "./types";
 
 /**
  * This file contains API functions for interacting with the backend services.
@@ -17,51 +18,15 @@ export const videoGeneratePresignedUrl = async (
 	});
 
 	if (!response.ok) {
-    if (response.headers.get("Content-Type")?.includes("application/json")) {
-      const errorData: { message?: string } = await response.json();
-      throw new Error(errorData?.message || 'Failed to generate presigned URL');
-    }
+		if (response.headers.get("Content-Type")?.includes("application/json")) {
+			const errorData: { message?: string } = await response.json();
+			throw new Error(errorData?.message || "Failed to generate presigned URL");
+		}
 		throw new Error("Failed to generate presigned URL");
 	}
 
 	const data = await response.json();
 	return data.signedUrl;
-};
-
-/**
- * Updates video metadata
- * @param videoId The ID of the video to update
- * @param metadata The metadata to update
- * @returns The updated video
- */
-export const updateVideoMetadata = async (
-	videoId: string,
-	metadata: {
-		title: string;
-		description: string;
-		tags: string[];
-		blockedCountries: string[];
-	},
-): Promise<Video> => {
-	const response = await fetch(`${config.apiUrl}/videos/metadata`, {
-		method: "PUT",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			videoId,
-			title: metadata.title,
-			description: metadata.description,
-			tags: metadata.tags,
-			blockedCountries: metadata.blockedCountries,
-		}),
-	});
-
-	if (!response.ok) {
-		throw new Error(`Failed to update video metadata: ${response.statusText}`);
-	}
-
-	return await response.json();
 };
 
 export const searchVideos = async (
@@ -85,4 +50,102 @@ export const searchVideos = async (
 	}
 
 	return await response.json();
+};
+
+type GetVideosParams = {
+	userId: string;
+	searchTerm?: string;
+	take?: number;
+	skip?: number;
+};
+
+export const getVideos = async (
+	params: GetVideosParams,
+): Promise<Paginated<VideoDto>> => {
+	const url = new URL(`${config.userApiUrl}/v1/videos`);
+	if (params.searchTerm) {
+		url.searchParams.append("searchTerm", params.searchTerm);
+	}
+
+	const response = await fetch(url, {
+		method: "GET",
+		headers: {
+			Authorization: `Bearer ${params.userId}`,
+			"Content-Type": "application/json",
+		},
+	});
+
+	if (!response.ok) {
+		throw new Error(`Failed to fetch videos: ${response.statusText}`);
+	}
+
+	return await response.json();
+};
+
+export const signIn = async (username: string): Promise<UserInfo> => {
+	const response = await fetch(`${config.userApiUrl}/v1/auth/sign-in`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ username }),
+	});
+
+	if (!response.ok) {
+		throw new Error(`Failed to sign in: ${response.statusText}`);
+	}
+
+	return await response.json();
+};
+
+export const getVideoComments = async (
+	user: UserInfo,
+	videoId: string,
+): Promise<Paginated<VideoCommentDto>> => {
+	const response = await fetch(
+		`${config.userApiUrl}/v1/videos/${videoId}/comments`,
+		{
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${user.userId}`,
+			},
+		},
+	);
+
+	if (!response.ok) {
+		throw new Error(
+			`Failed to fetch comments for video ${videoId}: ${response.statusText}`,
+		);
+	}
+
+	return await response.json();
+};
+
+type CreateVideoCommentParams = {
+	user: UserInfo;
+	videoId: string;
+	comment: string;
+};
+
+export const createVideoComment = async (
+	params: CreateVideoCommentParams,
+): Promise<void> => {
+	const { user, videoId, comment } = params;
+
+	const response = await fetch(
+		`${config.userApiUrl}/v1/videos/${videoId}/comments`,
+		{
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${user.userId}`,
+			},
+			body: JSON.stringify({ comment }),
+		},
+	);
+
+	if (!response.ok) {
+		throw new Error(
+			`Failed to create comment for video ${videoId}: ${response.statusText}`,
+		);
+	}
 };

@@ -56,12 +56,6 @@ const Header = () => {
 						<Link to="/" className="text-white hover:text-gray-300">
 							Home
 						</Link>
-						<Link to="/upload" className="text-white hover:text-gray-300">
-							Upload
-						</Link>
-						<Link to="/manage" className="text-white hover:text-gray-300">
-							Manage
-						</Link>
 					</nav>
 				</div>
 

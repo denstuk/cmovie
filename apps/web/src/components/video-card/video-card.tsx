@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { Link } from "react-router";
-import type { Video } from "../../models/video";
+import type { VideoDto } from "../../api/types";
 
 // TODO: For now, we'll use placeholder images
 const getThumbnailUrl = (fileKey: string) => {
@@ -11,20 +11,20 @@ const getThumbnailUrl = (fileKey: string) => {
 };
 
 type VideoCardProps = {
-	video: Video;
+	video: VideoDto;
 };
 
 export const VideoCard: FC<VideoCardProps> = ({ video }) => {
 	return (
 		<Link
-			key={video.video_id}
-			to={`/video/${video.video_id}`}
+			key={video.id}
+			to={`/video/${video.id}`}
 			className="video-card transition-all duration-300 hover:scale-105 group w-[320px]"
 		>
 			<div className="relative w-full rounded-lg overflow-hidden">
 				<div className="aspect-video">
 					<img
-						src={getThumbnailUrl(video.file_key)}
+						src={getThumbnailUrl(video.fileKey)}
 						alt={`${video.title} thumbnail`}
 						className="w-full h-full object-cover rounded-lg shadow-md"
 					/>

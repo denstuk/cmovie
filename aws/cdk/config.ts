@@ -36,4 +36,9 @@ export class Config {
 
     return readFileSync(join(__dirname, cfPrivateKeyPath), 'utf-8');
   }
+
+  static get cloudFrontAuthHeaderValue(): string {
+    // Generate a consistent but unique value for the CloudFront auth header
+    return `${Config.appName}-cf-auth-${Config.envName}-${Date.now().toString(36)}`;
+  }
 }

@@ -5,6 +5,7 @@ import { Repository } from "typeorm";
 import { UserEntity } from "../../entities/user.entity";
 import { VideoCommentCreateDto } from "./dtos/video-comment-create.dto";
 import { VideoCommentEntity } from "../../entities/video-comment.entity";
+import { VIDEO_COMMENT_REPO, VIDEO_REPO } from "../../database/database.repos";
 
 type SearchParams = {
   searchTerm?: string;
@@ -20,9 +21,9 @@ type VideoCommentCreateParams = VideoCommentCreateDto & {
 @Injectable()
 export class VideoService {
   constructor(
-    @Inject('VIDEO_REPOSITORY')
+    @Inject(VIDEO_REPO)
     private videoRepository: Repository<VideoEntity>,
-    @Inject('VIDEO_COMMENT_REPOSITORY')
+    @Inject(VIDEO_COMMENT_REPO)
     private videoCommentRepository: Repository<VideoCommentEntity>,
   ) {}
 
@@ -62,7 +63,9 @@ export class VideoService {
 
   async getComments(videoId: string): Promise<Paginated<VideoCommentEntity>> {
     const queryBuilder = this.videoCommentRepository.createQueryBuilder('comment')
-      .where('comment.videoId = :videoId', { videoId });
+      .where('comment.videoId = :videoId', { videoId })
+      .leftJoinAndSelect('comment.user', 'user')
+      .orderBy('comment.createdAt', 'DESC');
 
     const [items, total] = await queryBuilder
       .take(10)

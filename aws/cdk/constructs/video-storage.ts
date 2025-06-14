@@ -4,8 +4,6 @@ import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Construct } from "constructs";
 import { Config } from "../config";
 import { RemovalPolicy } from "aws-cdk-lib";
-import { readFileSync } from "fs";
-import { join } from "path";
 
 export class VideoStorage extends Construct {
   readonly s3: Bucket;

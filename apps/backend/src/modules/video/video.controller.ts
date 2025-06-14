@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { VideoService } from "./video.service";
 import { AuthGuard } from "../auth/auth.guard";
 import { VideoSearchDto } from "./dtos/video-search.dto";
@@ -18,9 +18,9 @@ export class VideoController {
   ) {}
 
   @UseGuards(AuthGuard)
-  @Post('search')
-  async search(@Body() body: VideoSearchDto): Promise<PaginatedDto<VideoDto>> {
-    return this.videoService.search(body);
+  @Get()
+  async search(@Query() query: VideoSearchDto): Promise<PaginatedDto<VideoDto>> {
+    return this.videoService.search(query);
   }
 
   @UseGuards(AuthGuard)
