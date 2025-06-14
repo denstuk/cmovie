@@ -1,5 +1,4 @@
-import { CfnOutput, Duration, RemovalPolicy } from "aws-cdk-lib";
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import { CfnOutput, Duration } from "aws-cdk-lib";
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -23,13 +22,6 @@ export class AdminApiComponent extends Construct {
 
       const { videoStorage } = props;
 
-      // DynamoDB for Video Metadata
-      const videoTable = new dynamodb.Table(this, `${Config.appName}-videos-table`, {
-        partitionKey: { name: 'video_id', type: dynamodb.AttributeType.STRING },
-        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        removalPolicy: RemovalPolicy.DESTROY,
-      });
-
       // API Gateway for video operations
       const api = new apigateway.RestApi(this, `${Config.appName}-video-api`, {
         restApiName: `${Config.appName}-video-api`,
@@ -41,7 +33,7 @@ export class AdminApiComponent extends Construct {
       });
 
       // CloudFront distribution for API Gateway
-      // TODO: API must be accessible ONLY via CloudFront
+      // TODO: API must be protected
       const distribution = new cloudfront.Distribution(this, `${Config.appName}-api-distribution`, {
         comment: `${Config.appName} Admin API Distribution`,
         defaultBehavior: {
@@ -84,7 +76,6 @@ export class AdminApiComponent extends Construct {
           POSTGRES_PASS: env.USER_API_DB_PASS,
         },
       });
-      videoTable.grantReadWriteData(videoSetMetadataFn); // Grant permissions to read/write to the DynamoDB table
       const videoSetMetadataFnIntegration = new apigateway.LambdaIntegration(videoSetMetadataFn);
 
       const videoSearchFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-search-fn`, {
@@ -102,38 +93,7 @@ export class AdminApiComponent extends Construct {
           POSTGRES_PASS: env.USER_API_DB_PASS,
         },
       });
-      videoTable.grantReadData(videoSearchFn); // Grant read-only permissions for the search function
       const videoSearchFnIntegration = new apigateway.LambdaIntegration(videoSearchFn);
-
-      const videoGetByIdFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-get-by-id-fn`, {
-        functionName: `${Config.appName}-video-get-by-id`,
-        description: 'Lambda function to get video metadata by ID',
-        entry: 'admin-api/lambdas/video-get-by-id-fn/index.ts',
-        handler: 'handler',
-        logRetention: RetentionDays.ONE_DAY,
-        timeout: Duration.seconds(2),
-        environment: {
-          TABLE_NAME: videoTable.tableName,
-        },
-      });
-      videoTable.grantReadData(videoGetByIdFn); // Grant read-only permissions
-      const videoGetByIdFnIntegration = new apigateway.LambdaIntegration(videoGetByIdFn);
-
-      const videoCreateViewSignedUrlFn = new nodejs.NodejsFunction(this, `${Config.appName}-video-create-view-signed-url-fn`, {
-        functionName: `${Config.appName}-video-create-view-signed-url-fn`,
-        description: 'Lambda function to generate presigned URLs for viewing videos',
-        entry: 'admin-api/lambdas/video-create-view-signed-url-fn/index.ts',
-        handler: 'handler',
-        logRetention: RetentionDays.ONE_DAY,
-        environment: {
-          CF_KEY_PAIR_ID: videoStorage.key.publicKeyId,
-          CF_PRIVATE_KEY: Config.cloudFrontPrivateKey,
-          TABLE_NAME: videoTable.tableName,
-        },
-        timeout: Duration.seconds(30),
-      });
-      videoTable.grantReadData(videoCreateViewSignedUrlFn); // Grant read-only permissions
-      const videoCreateViewSignedUrlFnIntegration = new apigateway.LambdaIntegration(videoCreateViewSignedUrlFn);
 
       // Create API resources and methods
       const videosResource = api.root.addResource('videos');
@@ -141,15 +101,11 @@ export class AdminApiComponent extends Construct {
       const uploadResource = api.root.addResource('upload');
       const presignedUrlResource = uploadResource.addResource('presigned-url');
       const metadataResource = videosResource.addResource('metadata');
-      const videoByIdResource = videosResource.addResource('{id}');
-      const videoByIdPresignedUrlResource = videoByIdResource.addResource('presigned-url');
 
       // Set up API endpoints
       presignedUrlResource.addMethod('POST', videoCreateUploadSignedUrlFnIntegration);
       metadataResource.addMethod('PUT', videoSetMetadataFnIntegration);
       searchResource.addMethod('GET', videoSearchFnIntegration);
-      videoByIdResource.addMethod('GET', videoGetByIdFnIntegration);
-      videoByIdPresignedUrlResource.addMethod('POST', videoCreateViewSignedUrlFnIntegration);
 
       // Create an IAM policy that allows the presigned URL Lambda to invalidate CloudFront
       const cloudfrontInvalidationPolicy = new iam.PolicyStatement({
