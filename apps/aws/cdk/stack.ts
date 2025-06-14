@@ -1,7 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { WebDeployment } from "./constructs/web-deployment";
-import { Config } from "./config";
+import { Config } from "./common/config";
 import { AdminApiComponent } from "./components/admin-api.component";
 import { VideoStorage } from "./constructs/video-storage";
 import { UserApiComponent } from "./components/user-api.component";

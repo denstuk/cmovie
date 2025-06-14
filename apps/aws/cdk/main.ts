@@ -2,7 +2,7 @@
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { AwsStack } from "./stack";
-import { Config } from "./config";
+import { Config } from "./common/config";
 
 const app = new cdk.App();
 new AwsStack(app, "cmovie-stack", {

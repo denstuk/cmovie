@@ -23,7 +23,7 @@ export class VideoEntity {
 	@Column("text", { array: true, default: [] })
 	tags: string[];
 
-	@Column("text", { array: true, name: "regions_blocked", default: [] })
+	@Column("text", { array: true, name: "regions_blocked", default: [], select: false })
 	regionsBlocked: string[];
 
 	@CreateDateColumn({ name: "created_at", type: "timestamp with time zone" })

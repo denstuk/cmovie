@@ -6,12 +6,12 @@ import {
 	HttpMethods,
 } from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
-import { Config } from "../config";
+import { Config } from "../common/config";
 import { Duration, RemovalPolicy } from "aws-cdk-lib";
-import { Runtime } from "aws-cdk-lib/aws-lambda";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as cloudfront_origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
+import * as iam from "aws-cdk-lib/aws-iam";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { S3EventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
@@ -23,6 +23,14 @@ export class VideoStorage extends Construct {
 
 	constructor(scope: Construct, id: string) {
 		super(scope, id);
+
+    const mediaConvertRole = new iam.Role(this, `${Config.appName}-mediaconvert-role`, {
+      roleName: `${Config.appName}-MediaConvertRole`,
+      assumedBy: new iam.ServicePrincipal("mediaconvert.amazonaws.com"),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess"),
+      ],
+    });
 
 		// S3 Bucket for Temporary Videos (Uploads)
 		this.s3Temp = new Bucket(this, `${Config.appName}-video-temp-storage-s3`, {
@@ -41,6 +49,19 @@ export class VideoStorage extends Construct {
 			],
 			encryption: BucketEncryption.S3_MANAGED,
 			enforceSSL: true,
+      cors: [
+				{
+					allowedMethods: [
+						HttpMethods.GET,
+						HttpMethods.PUT,
+						HttpMethods.POST,
+						HttpMethods.HEAD,
+					],
+					allowedOrigins: ["*"],
+					allowedHeaders: ["*"],
+					exposedHeaders: ["ETag"],
+				},
+			],
 		});
 
 		// S3 Bucket for Videos
@@ -67,7 +88,7 @@ export class VideoStorage extends Construct {
 			],
 		});
 
-		const uploadProcessorLambda = new nodejs.NodejsFunction(
+		const onUploadProcessorFn = new nodejs.NodejsFunction(
 			this,
 			`${Config.appName}-on-video-upload-processor-fn`,
 			{
@@ -80,15 +101,30 @@ export class VideoStorage extends Construct {
 				environment: {
 					TEMPORARY_BUCKET: this.s3Temp.bucketName,
 					DESTINATION_BUCKET: this.s3.bucketName,
+          MEDIA_CONVERT_ROLE_ARN: mediaConvertRole.roleArn,
 				},
 			},
 		);
 
-		this.s3Temp.grantReadWrite(uploadProcessorLambda);
-		this.s3Temp.grantDelete(uploadProcessorLambda);
-		this.s3.grantReadWrite(uploadProcessorLambda);
+    onUploadProcessorFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["iam:PassRole"],
+      resources: [mediaConvertRole.roleArn],
+    }));
+    // TODO:Fix hardcode after testing
+    onUploadProcessorFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["mediaconvert:CreateJob"],
+        resources: [
+          "arn:aws:mediaconvert:us-east-1:404332415688:queues/Default",
+        ],
+      }),
+    );
 
-		uploadProcessorLambda.addEventSource(
+		this.s3Temp.grantReadWrite(onUploadProcessorFn);
+		this.s3Temp.grantDelete(onUploadProcessorFn);
+		this.s3.grantReadWrite(onUploadProcessorFn);
+
+		onUploadProcessorFn.addEventSource(
 			new S3EventSource(this.s3Temp, {
 				events: [EventType.OBJECT_CREATED],
 			}),

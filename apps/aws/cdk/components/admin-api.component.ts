@@ -5,10 +5,10 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as cloudfront_origins from "aws-cdk-lib/aws-cloudfront-origins";
 import { Construct } from "constructs";
-import { Config } from "../config";
+import { Config } from "../common/config";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { VideoStorage } from "../constructs/video-storage";
-import { env } from "../env";
+import { env } from "../common/env";
 
 type AdminApiComponentProps = {
 	videoStorage: VideoStorage;
@@ -63,11 +63,12 @@ export class AdminApiComponent extends Construct {
 				logRetention: RetentionDays.ONE_DAY,
 				timeout: Duration.seconds(2),
 				environment: {
-					BUCKET_NAME: videoStorage.s3.bucketName,
+					BUCKET_NAME: videoStorage.s3Temp.bucketName,
 				},
 			},
 		);
-		videoStorage.s3.grantReadWrite(videoCreateUploadSignedUrlFn); // Grant permissions to read/write to the S3 bucket, TODO: do I we need this?
+    // Grant permissions to read/write to the S3 bucket, TODO: Update?
+		videoStorage.s3Temp.grantReadWrite(videoCreateUploadSignedUrlFn);
 		const videoCreateUploadSignedUrlFnIntegration =
 			new apigateway.LambdaIntegration(videoCreateUploadSignedUrlFn);
 
@@ -112,6 +113,7 @@ export class AdminApiComponent extends Construct {
 					POSTGRES_USER: env.USER_API_DB_USER,
 					POSTGRES_PASS: env.USER_API_DB_PASS,
 				},
+        bundling: { forceDockerBundling: false, }
 			},
 		);
 		const videoSearchFnIntegration = new apigateway.LambdaIntegration(

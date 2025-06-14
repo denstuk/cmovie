@@ -6,7 +6,7 @@ import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { Construct } from "constructs";
-import { Config } from "../config";
+import { Config } from "../common/config";
 
 type FargateServiceProps = {
 	vpc: ec2.Vpc;

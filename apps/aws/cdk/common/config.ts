@@ -2,7 +2,7 @@ import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { env } from "./env";
-import { formatAsPemKey } from "./common/utils";
+import { formatAsPemKey } from "./utils";
 
 export class Config {
 	static readonly awsRegion = env.AWS_REGION || "us-east-1";
@@ -12,7 +12,7 @@ export class Config {
 
 	static readonly webBuildPath = "../web/dist";
 	static readonly adminUiBuildPath = "../admin-ui/dist";
-	static readonly backendPath = join(__dirname, "../../backend");
+	static readonly backendPath = join(__dirname, "../../../backend");
 
 	static get cloudFrontPublicKey(): string {
 		const base64 = readFileSync(

@@ -3,5 +3,4 @@ export class VideoDto {
 	readonly title: string;
 	readonly description: string;
 	readonly tags: string[];
-	readonly regionsBlocked: string[];
 }

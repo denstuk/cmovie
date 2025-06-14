@@ -1,6 +1,6 @@
 import { Vpc } from "aws-cdk-lib/aws-ec2";
 import { Construct } from "constructs";
-import { Config } from "../config";
+import { Config } from "../common/config";
 import { FargateService } from "../constructs/fargate-service";
 import { VideoStorage } from "../constructs/video-storage";
 

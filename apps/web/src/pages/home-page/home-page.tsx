@@ -63,6 +63,7 @@ export const HomePage: FC = () => {
 						className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-white focus:border-white"
 						onChange={(e) => setInputValue(e.target.value.trim())}
 						value={inputValue}
+            maxLength={50}
 					/>
 					<div className="absolute inset-y-0 right-0 flex items-center pr-3">
 						<svg
