@@ -82,7 +82,11 @@ export class FargateService extends Construct {
           }),
           // Configure CloudFront to forward all headers to the origin
           originRequestPolicy: new cloudfront.OriginRequestPolicy(this, `${Config.appName}-req-policy`, {
-            headerBehavior: cloudfront.OriginRequestHeaderBehavior.all(),
+            headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList(
+              'CloudFront-Viewer-Country',
+              'CloudFront-Viewer-City',
+              'X-Api-Token'
+            ),
             cookieBehavior: cloudfront.OriginRequestCookieBehavior.all(),
             queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all()
           }),

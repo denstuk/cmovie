@@ -1,11 +1,12 @@
 import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { env } from './env';
 
 export class Config {
-  static readonly awsRegion = process.env.AWS_REGION || 'us-east-1';
+  static readonly awsRegion = env.AWS_REGION || 'us-east-1';
   static readonly project = 'cmovie';
-  static readonly envName = process.env.ENVIRONMENT || 'dev';
+  static readonly envName = env.ENVIRONMENT || 'dev';
   static readonly appName = `${Config.project}-${Config.envName}`;
 
   static readonly webBuildPath = '../web/dist';
@@ -13,7 +14,7 @@ export class Config {
   static readonly backendPath = join(__dirname, '../../backend');
 
   static get cloudFrontPublicKey(): string {
-    const cfPublicKeyPath = process.env.CF_PUBLIC_KEY_PATH;
+    const cfPublicKeyPath = env.CF_PUBLIC_KEY_PATH;
 
     if (!cfPublicKeyPath) {
       throw new Error('CLOUDFRONT_PUBLIC_KEY_PATH is not set in environment variables');
@@ -28,7 +29,7 @@ export class Config {
   }
 
   static get cloudFrontPrivateKey(): string {
-    const cfPrivateKeyPath = process.env.CF_PRIVATE_KEY_PATH;
+    const cfPrivateKeyPath = env.CF_PRIVATE_KEY_PATH;
 
     if (!cfPrivateKeyPath) {
       throw new Error('CLOUDFRONT_PRIVATE_KEY_PATH is not set in environment variables');

@@ -8,9 +8,12 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "format": "biome format --write ./src",
+    "lint": "biome check ./src --fix"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@types/aws-lambda": "^8.10.149",
     "@types/jest": "^29.5.14",
     "@types/node": "22.7.9",
@@ -31,6 +34,6 @@
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21",
     "uuid": "^11.1.0",
-    "zod": "^3.25.63"
+    "zod": "^3.25.64"
   }
 }

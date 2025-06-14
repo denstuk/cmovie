@@ -18,6 +18,7 @@ export class AwsStack extends cdk.Stack {
 
     new UserApiComponent(this, `${Config.appName}-user-api`, {
       vpc,
+      videoStorage,
     });
 
     new AdminApiComponent(this, `${Config.appName}-video-stream-stack`, {

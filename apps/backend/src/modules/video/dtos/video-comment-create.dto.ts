@@ -1,5 +1,4 @@
-
 export class VideoCommentCreateDto {
-  readonly comment: string;
-  readonly videoId: string;
+	readonly comment: string;
+	readonly videoId: string;
 }

@@ -6,15 +6,16 @@ import { DatabaseModule } from "../../database/database.module";
 import { AuthService } from "./auth.service";
 
 @Module({
-  imports: [DatabaseModule],
-  controllers: [AuthController],
-  providers: [
-    {
-      provide: 'USER_REPOSITORY',
-      useFactory: (dataSource: DataSource) => dataSource.getRepository(UserEntity),
-      inject: ['DATA_SOURCE'],
-    },
-    AuthService
-  ],
+	imports: [DatabaseModule],
+	controllers: [AuthController],
+	providers: [
+		{
+			provide: "USER_REPOSITORY",
+			useFactory: (dataSource: DataSource) =>
+				dataSource.getRepository(UserEntity),
+			inject: ["DATA_SOURCE"],
+		},
+		AuthService,
+	],
 })
 export class AuthModule {}

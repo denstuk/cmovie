@@ -2,15 +2,17 @@ import { Vpc } from "aws-cdk-lib/aws-ec2";
 import { Construct } from "constructs";
 import { Config } from "../config";
 import { FargateService } from "../constructs/fargate-service";
+import { VideoStorage } from "../constructs/video-storage";
 
 type UserApiComponentProps = {
   vpc: Vpc;
+  videoStorage: VideoStorage;
 }
 
 export class UserApiComponent extends Construct {
   constructor(scope: Construct, id: string, props: UserApiComponentProps) {
     super(scope, id);
-    const { vpc } = props;
+    const { vpc, videoStorage } = props;
 
     new FargateService(this, `${Config.appName}-backend`, {
       vpc,
@@ -23,6 +25,8 @@ export class UserApiComponent extends Construct {
         "DB_USER": process.env.USER_API_DB_USER as string,
         "DB_PASS": process.env.USER_API_DB_PASS as string,
         "DB_NAME": process.env.USER_API_DB_NAME as string,
+        "CLOUDFRONT_KEY_PAIR_ID": videoStorage.key.publicKeyId,
+        "CLOUDFRONT_PRIVATE_KEY": Config.cloudFrontPrivateKey,
       },
     });
   }

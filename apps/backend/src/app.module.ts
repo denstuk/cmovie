@@ -8,13 +8,13 @@ import { CloudFrontVerificationMiddleware } from "./middlewares/cloudfront-verif
 
 @Module({
 	imports: [ConfigModule.forRoot(), DatabaseModule, AuthModule, VideoModule],
-  controllers: [AppController],
+	controllers: [AppController],
 })
 export class AppModule {
-  configure(consumer: MiddlewareConsumer) {
-    // Apply the CloudFront verification middleware to all routes
-    consumer
-      .apply(CloudFrontVerificationMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.ALL });
-  }
+	configure(consumer: MiddlewareConsumer) {
+		// Apply the CloudFront verification middleware to all routes
+		consumer
+			.apply(CloudFrontVerificationMiddleware)
+			.forRoutes({ path: "*", method: RequestMethod.ALL });
+	}
 }

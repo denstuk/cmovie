@@ -1,61 +1,48 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
-import { videoGeneratePresignedUrl } from "../../api/api";
+import { getVideoById, videoGeneratePresignedUrl } from "../../api/api";
 import { PageLoader } from "../../components/page-loader";
 import { config } from "../../config";
-import type { Video } from "../../models/video";
 import { Page } from "../../components/page/page";
 import { CommentsSection } from "./comments-section/comments-section";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthContext } from "../../auth/auth.context";
+
+// Get the video URL from the fileKey
+const getVideoUrl = (fileKey: string) => `https://${config.cloudfrontDomain}/${fileKey}`;
 
 export const VideoPage: FC = () => {
+  const { user } = useAuthContext();
 	const { videoId } = useParams<{ videoId: string }>();
-	const videoRef = useRef<HTMLVideoElement>(null);
 	const VIDEO_PROGRESS_KEY = `video-progress-${videoId}`;
 
-	const [videoData, setVideoData] = useState<Video | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 	const [signedVideoUrl, setSignedVideoUrl] = useState<string | null>(null);
 
-	useEffect(() => {
-		const fetchVideoData = async () => {
-			if (!videoId) return;
+  const {
+    isLoading,
+    error,
+    data: video,
+  } = useQuery({
+    queryKey: ["video", videoId, user],
+    queryFn: async () => {
+      if (!user || !videoId) return;
 
-			try {
-				setIsLoading(true);
-				const response = await fetch(`${config.apiUrl}/videos/${videoId}`);
+      const video = await getVideoById({ userId: user.userId, videoId });
+      const videoUrl = getVideoUrl(video.fileKey);
+      const signedUrl = await videoGeneratePresignedUrl({
+        videoId: video.id as string,
+        videoUrl,
+        userId: user.userId,
+      });
+      setSignedVideoUrl(signedUrl);
 
-				if (!response.ok) {
-					if (response.status === 404) {
-						throw new Error("Video not found");
-					}
-					throw new Error("Failed to fetch video data");
-				}
-
-				const data = await response.json();
-				setVideoData(data.video);
-
-				const videoUrl = getVideoUrl(data.video.file_key);
-				const signedUrl = await videoGeneratePresignedUrl(
-					data.video.video_id,
-					videoUrl,
-				);
-				console.log(`Signed URL: ${signedUrl}`);
-				setSignedVideoUrl(signedUrl);
-			} catch (err) {
-				console.error("Error fetching video data:", err);
-				setError(
-					err instanceof Error ? err.message : "An unknown error occurred",
-				);
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		fetchVideoData();
-	}, [videoId]);
+      return video;
+    },
+    retry: false,
+  });
 
 	useEffect(() => {
 		const video = videoRef.current;
@@ -77,25 +64,12 @@ export const VideoPage: FC = () => {
 		return () => {
 			video.removeEventListener("timeupdate", handleTimeUpdate);
 		};
-	}, [VIDEO_PROGRESS_KEY, videoData]);
+	}, [VIDEO_PROGRESS_KEY, video]);
 
-	const handleShare = () => {
-		navigator.clipboard
-			.writeText(window.location.href)
-			.then(() => toast.info("URL copied to clipboard!"));
-	};
-
-	// Get the video URL from the file_key
-	const getVideoUrl = (fileKey: string) => {
-		// For testing fallback
-		if (fileKey.startsWith("sample/")) {
-			return "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-		}
-		console.log(`https://${config.cloudfrontDomain}/${fileKey}`);
-
-		// Real CloudFront URL
-		return `https://${config.cloudfrontDomain}/${fileKey}`;
-	};
+  const onShare = useCallback(async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    toast.info("Video URL copied to clipboard!");
+  }, [])
 
 	if (isLoading) {
 		return (
@@ -105,12 +79,12 @@ export const VideoPage: FC = () => {
 		);
 	}
 
-	if (error || !videoData || !signedVideoUrl) {
+	if (error || !video || !signedVideoUrl) {
 		return (
 			<Page>
 				<div className="text-center py-12">
 					<h2 className="text-xl font-semibold text-red-600">
-						{error || "Video not found"}
+						{error?.message || "Video not found"}
 					</h2>
 					<button
 						onClick={() => (window.location.href = "/")}
@@ -127,9 +101,10 @@ export const VideoPage: FC = () => {
 		<Page>
 			<div className="max-w-full">
 				<div className="flex justify-between items-center">
-					<h1 className="text-4xl font-bold text-white">{videoData.title}</h1>
+					<h1 className="text-4xl font-bold text-white">{video.title}</h1>
 					<button
-						onClick={handleShare}
+            type="button"
+						onClick={onShare}
 						className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-all cursor-pointer"
 					>
 						<svg
@@ -144,7 +119,7 @@ export const VideoPage: FC = () => {
 					</button>
 				</div>
 				<p className="mt-4 text-lg text-gray-100">
-					{videoData.tags.join(", ")}
+					{video.tags.join(", ")}
 				</p>
 
 				{/* Video container with responsive width */}
@@ -159,7 +134,7 @@ export const VideoPage: FC = () => {
 				<div className="mt-6">
 					<h2 className="text-2xl font-bold text-white mb-2">Description</h2>
 					<p className="text-gray-100">
-						{videoData.description || "No description provided."}
+						{video.description || "No description provided."}
 					</p>
 				</div>
 
