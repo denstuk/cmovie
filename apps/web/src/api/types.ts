@@ -16,7 +16,6 @@ export interface VideoDto {
 	description: string | null;
 	fileKey: string;
 	tags: string[];
-	regionsBlocked: string[];
 	createdAt: string;
 	updatedAt: string;
 }

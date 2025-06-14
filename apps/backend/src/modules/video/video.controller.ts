@@ -4,7 +4,6 @@ import {
 	Get,
 	Param,
 	Post,
-	Put,
 	Query,
 	Req,
 	UseGuards,
@@ -15,7 +14,6 @@ import { VideoSearchDto } from "./dtos/video-search.dto";
 import { PaginatedDto } from "../common/paginated.dto";
 import { VideoDto } from "./dtos/video.dto";
 import { EmptyResponseDto } from "../common/responses.dto";
-import { VideoUpdateDto } from "./dtos/video-update.dto";
 import { VideoCommentCreateDto } from "./dtos/video-comment-create.dto";
 import { CurrentUser } from "../auth/user.decorator";
 import { UserEntity } from "../../entities/user.entity";
@@ -60,15 +58,6 @@ export class VideoController {
 			videoId,
 			userId,
 		});
-	}
-
-	@UseGuards(AuthGuard)
-	@Put(":id")
-	async update(
-		@Param("id") id: string,
-		@Body() body: VideoUpdateDto,
-	): Promise<EmptyResponseDto> {
-		return this.videoService.update(id, body);
 	}
 
 	@UseGuards(AuthGuard)

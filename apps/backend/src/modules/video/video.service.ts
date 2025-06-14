@@ -80,21 +80,6 @@ export class VideoService {
 		return video;
 	}
 
-	async update(
-		videoId: string,
-		videoData: Partial<VideoEntity>,
-	): Promise<VideoEntity> {
-		const video = await this.videoRepository.findOneBy({ id: videoId });
-		if (!video) {
-			throw new NotFoundException("Video not found");
-		}
-
-		return this.videoRepository.save({
-			...video,
-			...videoData,
-		});
-	}
-
 	async getComments(videoId: string): Promise<Paginated<VideoCommentEntity>> {
 		const queryBuilder = this.videoCommentRepository
 			.createQueryBuilder("comment")

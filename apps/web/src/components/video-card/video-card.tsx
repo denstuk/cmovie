@@ -3,10 +3,8 @@ import { Link } from "react-router";
 import type { VideoDto } from "../../api/types";
 
 // TODO: For now, we'll use placeholder images
-const getThumbnailUrl = (fileKey: string) => {
-	const id =
-		(Number.parseInt(fileKey.split("/").pop()?.split(".")[0] || "0", 10) % 20) +
-		100;
+const getThumbnailUrl = (date: string) => {
+	const id = (new Date(date).getTime() % 20) + 100;
 	return `https://picsum.photos/id/${id}/400/250`;
 };
 
@@ -24,7 +22,7 @@ export const VideoCard: FC<VideoCardProps> = ({ video }) => {
 			<div className="relative w-full rounded-lg overflow-hidden">
 				<div className="aspect-video">
 					<img
-						src={getThumbnailUrl(video.fileKey)}
+						src={getThumbnailUrl(video.createdAt)}
 						alt={`${video.title} thumbnail`}
 						className="w-full h-full object-cover rounded-lg shadow-md"
 					/>

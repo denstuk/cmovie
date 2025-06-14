@@ -89,6 +89,7 @@ export class AdminApiComponent extends Construct {
 					POSTGRES_USER: env.USER_API_DB_USER,
 					POSTGRES_PASS: env.USER_API_DB_PASS,
 				},
+        bundling: { forceDockerBundling: false, }
 			},
 		);
 		const videoSetMetadataFnIntegration = new apigateway.LambdaIntegration(

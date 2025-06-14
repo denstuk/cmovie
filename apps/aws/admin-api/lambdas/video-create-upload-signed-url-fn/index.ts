@@ -31,7 +31,7 @@ const _handler = async (
 
 	// Generate unique ID for the video
 	const videoId = uuidv4();
-	const fileKey = `videos/${videoId}/${fileName}`;
+	const fileKey = `videos/${videoId}/video`;
 
 	// Create presigned URL for file upload
 	const presignedUrl = await getSignedUrl(
