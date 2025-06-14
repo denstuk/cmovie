@@ -9,6 +9,7 @@ import { Construct } from "constructs";
 import { Config } from "../config";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { VideoStorage } from "../constructs/video-storage";
+import { env } from "../env";
 
 type AdminApiComponentProps = {
   videoStorage: VideoStorage;
@@ -76,7 +77,11 @@ export class AdminApiComponent extends Construct {
         logRetention: RetentionDays.ONE_DAY,
         timeout: Duration.seconds(2),
         environment: {
-          TABLE_NAME: videoTable.tableName,
+          POSTGRES_HOST: env.USER_API_DB_HOST,
+          POSTGRES_PORT: env.USER_API_DB_PORT,
+          POSTGRES_NAME: env.USER_API_DB_NAME,
+          POSTGRES_USER: env.USER_API_DB_USER,
+          POSTGRES_PASS: env.USER_API_DB_PASS,
         },
       });
       videoTable.grantReadWriteData(videoSetMetadataFn); // Grant permissions to read/write to the DynamoDB table
@@ -90,7 +95,11 @@ export class AdminApiComponent extends Construct {
         logRetention: RetentionDays.ONE_DAY,
         timeout: Duration.seconds(2),
         environment: {
-          TABLE_NAME: videoTable.tableName,
+          POSTGRES_HOST: env.USER_API_DB_HOST,
+          POSTGRES_PORT: env.USER_API_DB_PORT,
+          POSTGRES_NAME: env.USER_API_DB_NAME,
+          POSTGRES_USER: env.USER_API_DB_USER,
+          POSTGRES_PASS: env.USER_API_DB_PASS,
         },
       });
       videoTable.grantReadData(videoSearchFn); // Grant read-only permissions for the search function

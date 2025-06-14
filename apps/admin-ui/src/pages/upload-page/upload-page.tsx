@@ -3,6 +3,7 @@ import type { ChangeEvent, FC, FormEvent } from "react";
 import { config } from "../../config";
 import { Page } from "../page";
 import { COUNTRIES } from "../../constants/countries";
+import { toast } from "sonner";
 
 export const UploadPage: FC = () => {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -129,10 +130,10 @@ export const UploadPage: FC = () => {
 			setTags([]);
 			setUploadProgress(100);
 
-			alert("Video uploaded successfully!");
+			toast.success("Video uploaded successfully!");
 		} catch (error) {
 			console.error("Upload failed:", error);
-			alert("Upload failed. Please try again.");
+			toast.error("Upload failed. Please try again.");
 		} finally {
 			setIsSubmitting(false);
 		}

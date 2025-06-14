@@ -1,11 +1,31 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { CloudFrontClient, CreateInvalidationCommand } from "@aws-sdk/client-cloudfront";
 import { errorMiddleware } from '../../common/middlewares';
+import { okResponse } from '../../common/responses';
+import { PgClient } from '../../services/pg.client';
+import { z } from 'zod';
 
-const dynamoClient = new DynamoDBClient({ region: 'us-east-1' });
-const docClient = DynamoDBDocumentClient.from(dynamoClient);
+// Interface based on the VideoEntity from the backend project
+interface Video {
+  id: string;
+  title: string;
+  description: string | null;
+  fileKey: string;
+  tags: string[];
+  regionsBlocked: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Validation schema for the request body
+const VideoMetadataSchema = z.object({
+  videoId: z.string().uuid({ message: "Video ID must be a valid UUID" }),
+  title: z.string().min(1, { message: "Title is required" }),
+  description: z.string().optional().nullable(),
+  tags: z.array(z.string()).optional().default([]),
+  regionsBlocked: z.array(z.string()).optional().default([]),
+  fileKey: z.string().optional(),
+});
 
 const _handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   // Add CORS headers to all responses
@@ -15,82 +35,122 @@ const _handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyRes
     'Access-Control-Allow-Methods': 'OPTIONS,PUT,GET'
   };
 
-  const requestBody = JSON.parse(event.body || '{}');
-      const { videoId, title, description, tags, blockedCountries, fileKey } = requestBody;
+  try {
+    // Parse and validate the request body
+    const requestBody = JSON.parse(event.body || '{}');
+    const parsedBody = VideoMetadataSchema.safeParse(requestBody);
 
-      if (!videoId || !title) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: 'Missing required fields' }),
-        };
-      }
-
-      // Get existing video data if it exists (for backward compatibility)
-      const existingVideo = await docClient.send(
-        new GetCommand({
-          TableName: process.env.TABLE_NAME,
-          Key: { video_id: videoId },
-        })
-      );
-
-      const currentTimestamp = new Date().toISOString();
-
-      // Prepare video metadata - directly set values from the request or use defaults
-      const videoData = {
-        video_id: videoId,
-        title,
-        description: description || '',
-        file_key: fileKey || (existingVideo.Item?.file_key || ''),
-        upload_date: existingVideo.Item?.upload_date || currentTimestamp,
-        update_date: currentTimestamp,
-        tags: tags || [],
-        regions_blacklist: blockedCountries || [],
-      };
-
-      // Set metadata in DynamoDB
-      await docClient.send(
-        new PutCommand({
-          TableName: process.env.TABLE_NAME,
-          Item: videoData,
-        })
-      );
-
-      const distributionId = process.env.DISTRIBUTION_ID;
-      if (distributionId) {
-        // Import CloudFront client at the top of the file
-        const cloudfrontClient = new CloudFrontClient({ region: 'us-east-1' });
-
-        try {
-          // Invalidate CloudFront cache if distribution ID is set
-          console.log(`Invalidating CloudFront cache for distribution: ${distributionId}`);
-          await cloudfrontClient.send(
-        new CreateInvalidationCommand({
-          DistributionId: distributionId,
-          InvalidationBatch: {
-            Paths: {
-          Quantity: 1,
-          Items: [`/${videoData.file_key}`]
-            },
-            CallerReference: `invalidate-${videoId}-${Date.now()}`
-          }
-        })
-          );
-          console.log('Cache invalidation initiated successfully');
-        } catch (invalidationError) {
-          console.error('Error invalidating CloudFront cache:', invalidationError);
-          // Continue execution even if invalidation fails
-        }
-      }
-
+    if (!parsedBody.success) {
       return {
-        statusCode: 200,
+        statusCode: 400,
         headers,
         body: JSON.stringify({
-          message: 'Video metadata set successfully',
-          videoId,
+          error: 'Invalid request data',
+          details: parsedBody.error.format()
         }),
       };
+    }
+
+    const { videoId, title, description, tags, regionsBlocked, fileKey } = parsedBody.data;
+
+    // Check if the video exists
+    const existingVideoQuery = `
+      SELECT
+        id,
+        file_key as "fileKey"
+      FROM t_video
+      WHERE id = $1
+    `;
+
+    const existingVideos = await PgClient.query<Video>(existingVideoQuery, [videoId]);
+    const existingVideo = existingVideos.length > 0 ? existingVideos[0] : null;
+
+    if (!existingVideo && !fileKey) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Video not found and no fileKey provided' }),
+      };
+    }
+
+    const currentTimestamp = new Date();
+    const effectiveFileKey = fileKey || existingVideo?.fileKey || '';
+
+    // Update or insert video metadata in PostgreSQL (upsert)
+    const upsertQuery = `
+      INSERT INTO t_video (
+        id,
+        title,
+        description,
+        file_key,
+        tags,
+        regions_blocked,
+        updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (id) DO UPDATE SET
+        title = $2,
+        description = $3,
+        file_key = $4,
+        tags = $5,
+        regions_blocked = $6,
+        updated_at = $7
+      RETURNING id
+    `;
+
+    const params = [
+      videoId,
+      title,
+      description || '',
+      effectiveFileKey,
+      tags || [],
+      regionsBlocked || [],
+      currentTimestamp,
+    ];
+
+    await PgClient.query(upsertQuery, params);
+
+    // Handle CloudFront cache invalidation
+    const distributionId = process.env.DISTRIBUTION_ID;
+    if (distributionId && effectiveFileKey) {
+      const cloudfrontClient = new CloudFrontClient({ region: 'us-east-1' });
+
+      try {
+        console.log(`Invalidating CloudFront cache for distribution: ${distributionId}`);
+        await cloudfrontClient.send(
+          new CreateInvalidationCommand({
+            DistributionId: distributionId,
+            InvalidationBatch: {
+              Paths: {
+                Quantity: 1,
+                Items: [`/${effectiveFileKey}`]
+              },
+              CallerReference: `invalidate-${videoId}-${Date.now()}`
+            }
+          })
+        );
+        console.log('Cache invalidation initiated successfully');
+      } catch (invalidationError) {
+        console.error('Error invalidating CloudFront cache:', invalidationError);
+        // Continue execution even if invalidation fails
+      }
+    }
+
+    return okResponse({
+      message: 'Video metadata updated successfully',
+      videoId
+    });
+  } catch (error) {
+    console.error('Error updating video metadata:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        error: 'Failed to update video metadata',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      })
+    };
+  }
 };
 
 export const handler = errorMiddleware(_handler);

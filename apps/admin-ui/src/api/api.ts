@@ -1,5 +1,6 @@
 import { config } from "../config";
 import type { Video } from "../models/video";
+import type { VideoDto } from "./types";
 
 /**
  * This file contains API functions for interacting with the backend services.
@@ -40,7 +41,7 @@ export const updateVideoMetadata = async (
 		title: string;
 		description: string;
 		tags: string[];
-		blockedCountries: string[];
+		regionsBlocked: string[];
 	},
 ): Promise<Video> => {
 	const response = await fetch(`${config.apiUrl}/videos/metadata`, {
@@ -53,7 +54,7 @@ export const updateVideoMetadata = async (
 			title: metadata.title,
 			description: metadata.description,
 			tags: metadata.tags,
-			blockedCountries: metadata.blockedCountries,
+			regionsBlocked: metadata.regionsBlocked,
 		}),
 	});
 
@@ -67,8 +68,7 @@ export const updateVideoMetadata = async (
 export const searchVideos = async (
 	searchBy: string,
 ): Promise<{
-	videos: Video[];
-	nextToken?: string;
+	videos: VideoDto[];
 }> => {
 	const url = new URL(`${config.apiUrl}/videos/search`);
 	if (searchBy) {

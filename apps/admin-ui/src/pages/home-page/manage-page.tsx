@@ -3,18 +3,14 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { searchVideos, updateVideoMetadata } from "../../api/api";
 import { PageLoader } from "../../components/page-loader";
-import { getSampleVideos } from "../../mocks/videos";
-import type { Video } from "../../models/video";
 import { Page } from "../page";
 import { EditModal } from "./edit-modal";
+import type { VideoDto } from "../../api/types";
 
 export const HomePage = () => {
-	const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-	const [nextToken, setNextToken] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+	const [selectedVideo, setSelectedVideo] = useState<VideoDto | null>(null);
 
-	const queryClient = useQueryClient();
-
-	// Use React Query to fetch videos
 	const {
 		data,
 		isLoading,
@@ -25,51 +21,28 @@ export const HomePage = () => {
 		queryFn: async () => {
 			try {
 				const response = await searchVideos("");
-				setNextToken(response.nextToken || null);
 				return {
 					videos: response.videos,
-					hasMore: !!response.nextToken
 				};
 			} catch (err) {
 				console.error("Error fetching videos:", err);
-				// Fallback to sample data if API fails
-				return {
-					videos: getSampleVideos(),
-					hasMore: false
-				};
+        toast.error("Failed to fetch videos");
 			}
 		},
 	});
 
 	const videos = data?.videos || [];
-	const hasMore = data?.hasMore || false;
-
-	// Load more videos with React Query
-	const loadMoreMutation = useMutation({
-		mutationFn: async () => {
-			if (!nextToken) return { videos: [], nextToken: null };
-			return searchVideos("");
-		},
-		onSuccess: (newData) => {
-      queryClient.invalidateQueries({ queryKey: ['videos'] });
-			setNextToken(newData.nextToken || null);
-		},
-		onError: (err) => {
-			console.error("Error loading more videos:", err);
-			toast.error("Failed to load more videos");
-		}
-	});
 
 	// Update video mutation
 	const updateMutation = useMutation({
-		mutationFn: async (updatedVideo: Video) => {
+		mutationFn: async (updatedVideo: VideoDto) => {
 			return await updateVideoMetadata(
-				updatedVideo.video_id,
+				updatedVideo.id,
 				{
 					title: updatedVideo.title,
 					description: updatedVideo.description,
 					tags: updatedVideo.tags,
-					blockedCountries: updatedVideo.regions_blacklist,
+					regionsBlocked: updatedVideo.regionsBlocked,
 				}
 			);
 		},
@@ -84,7 +57,7 @@ export const HomePage = () => {
 	});
 
 	// Handler for saving video updates
-	const handleSaveVideo = async (updatedVideo: Video) => {
+	const handleSaveVideo = async (updatedVideo: VideoDto) => {
 		try {
 			await updateMutation.mutateAsync(updatedVideo);
 			return Promise.resolve();
@@ -125,9 +98,9 @@ export const HomePage = () => {
 						) : (
 							<>
 								<div className="space-y-4">
-									{videos.map((video: Video) => (
+									{videos.map((video) => (
 										<div
-											key={video.video_id}
+											key={video.id}
 											className="border border-gray-700 p-4 rounded-lg flex justify-between items-center"
 										>
 											<div>
@@ -136,8 +109,8 @@ export const HomePage = () => {
 												</h3>
 												<p className="text-sm text-gray-400">
 													Uploaded on{" "}
-													{video.upload_date
-														? new Date(video.upload_date).toLocaleDateString()
+													{video.updatedAt
+														? new Date(video.updatedAt).toLocaleDateString()
 														: "Unknown date"}
 												</p>
 												<p className="text-xs text-gray-500 mt-1">
@@ -148,9 +121,9 @@ export const HomePage = () => {
 												</p>
 												<p className="text-xs text-gray-500">
 													Restricted in:{" "}
-													{video.regions_blacklist &&
-													video.regions_blacklist.length > 0
-														? video.regions_blacklist.join(", ")
+													{video.regionsBlocked &&
+													video.regionsBlocked.length > 0
+														? video.regionsBlocked.join(", ")
 														: "No restrictions"}
 												</p>
 											</div>
@@ -164,21 +137,6 @@ export const HomePage = () => {
 										</div>
 									))}
 								</div>
-
-								{hasMore && (
-									<div className="mt-6 flex justify-center">
-										<button
-											type="button"
-											onClick={() => loadMoreMutation.mutate()}
-											disabled={loadMoreMutation.isPending}
-											className={`px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 ${
-												loadMoreMutation.isPending ? "opacity-50 cursor-not-allowed" : ""
-											}`}
-										>
-											{loadMoreMutation.isPending ? "Loading..." : "Load More Videos"}
-										</button>
-									</div>
-								)}
 							</>
 						)}
 					</div>

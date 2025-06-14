@@ -1,4 +1,4 @@
-import { CfnOutput, RemovalPolicy } from "aws-cdk-lib";
+import { CfnOutput, Duration, RemovalPolicy } from "aws-cdk-lib";
 import { BlockPublicAccess, Bucket } from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 import { Config } from "../config";
@@ -42,6 +42,15 @@ export class WebDeployment extends Construct {
           viewerProtocolPolicy: ViewerProtocolPolicy.ALLOW_ALL,
         },
         priceClass: PriceClass.PRICE_CLASS_100,
+        errorResponses: [
+          {
+            httpStatus: 404,
+            responseHttpStatus: 200,
+            responsePagePath: '/index.html',
+            ttl: Duration.seconds(0),
+          },
+        ],
+
       });
 
       new BucketDeployment(this, `${prefix}-s3-deployment`, {

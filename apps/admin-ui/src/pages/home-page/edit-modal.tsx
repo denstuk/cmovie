@@ -1,16 +1,16 @@
 import { useState } from "react";
-import type { Video } from "../../models/video";
 import { COUNTRIES } from "../../constants/countries";
+import type { VideoDto } from "../../api/types";
 
 export interface EditModalProps {
-	video: Video;
+	video: VideoDto;
 	isOpen: boolean;
 	onClose: () => void;
-	onSave: (video: Video) => Promise<void>;
+	onSave: (video: VideoDto) => Promise<void>;
 }
 
 export const EditModal = ({ video, isOpen, onClose, onSave }: EditModalProps) => {
-	const [editedVideo, setEditedVideo] = useState<Video>(video);
+	const [editedVideo, setEditedVideo] = useState<VideoDto>(video);
 	const [currentTag, setCurrentTag] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 
@@ -39,9 +39,9 @@ export const EditModal = ({ video, isOpen, onClose, onSave }: EditModalProps) =>
 	const handleCountryChange = (country: string) => {
 		setEditedVideo({
 			...editedVideo,
-			regions_blacklist: editedVideo.regions_blacklist.includes(country)
-				? editedVideo.regions_blacklist.filter((c) => c !== country)
-				: [...editedVideo.regions_blacklist, country],
+			regionsBlocked: editedVideo.regionsBlocked.includes(country)
+				? editedVideo.regionsBlocked.filter((c) => c !== country)
+				: [...editedVideo.regionsBlocked, country],
 		});
 	};
 
@@ -104,7 +104,7 @@ export const EditModal = ({ video, isOpen, onClose, onSave }: EditModalProps) =>
 									<input
 										type="checkbox"
 										id={`country-${country}`}
-										checked={editedVideo.regions_blacklist.includes(country)}
+										checked={editedVideo.regionsBlocked.includes(country)}
 										onChange={() => handleCountryChange(country)}
 										className="h-4 w-4 text-red-600 focus:ring-red-500 bg-gray-700 border-gray-500 rounded"
 									/>

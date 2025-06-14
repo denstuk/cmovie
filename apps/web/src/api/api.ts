@@ -1,5 +1,4 @@
 import { config } from "../config";
-import type { Video } from "../models/video";
 import type { Paginated, UserInfo, VideoCommentDto, VideoDto } from "./types";
 
 type VideoGeneratePresignedUrlParams = {
@@ -13,7 +12,7 @@ export const videoGeneratePresignedUrl = async ({
   videoUrl,
   userId
 }: VideoGeneratePresignedUrlParams): Promise<string> => {
-	const url = `${config.userApiUrl}/v1/videos/${videoId}/signed-url`;
+	const url = `${config.apiUrl}/v1/videos/${videoId}/signed-url`;
 
 	const response = await fetch(url, {
 		method: "POST",
@@ -36,29 +35,6 @@ export const videoGeneratePresignedUrl = async ({
 	return data.signedUrl;
 };
 
-export const searchVideos = async (
-	searchBy: string,
-): Promise<{
-	videos: Video[];
-	nextToken?: string;
-}> => {
-	const url = new URL(`${config.apiUrl}/videos/search`);
-	if (searchBy) {
-		url.searchParams.append("searchBy", searchBy);
-	}
-
-	const response = await fetch(url.toString(), {
-		method: "GET",
-		headers: { "Content-Type": "application/json" },
-	});
-
-	if (!response.ok) {
-		throw new Error(`Failed to search videos: ${response.statusText}`);
-	}
-
-	return await response.json();
-};
-
 type GetVideosParams = {
 	userId: string;
 	searchTerm?: string;
@@ -69,7 +45,7 @@ type GetVideosParams = {
 export const getVideos = async (
 	params: GetVideosParams,
 ): Promise<Paginated<VideoDto>> => {
-	const url = new URL(`${config.userApiUrl}/v1/videos`);
+	const url = new URL(`${config.apiUrl}/v1/videos`);
 	if (params.searchTerm) {
 		url.searchParams.append("searchTerm", params.searchTerm);
 	}
@@ -90,7 +66,7 @@ export const getVideos = async (
 };
 
 export const signIn = async (username: string): Promise<UserInfo> => {
-	const response = await fetch(`${config.userApiUrl}/v1/auth/sign-in`, {
+	const response = await fetch(`${config.apiUrl}/v1/auth/sign-in`, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ username }),
@@ -108,7 +84,7 @@ export const getVideoComments = async (
 	videoId: string,
 ): Promise<Paginated<VideoCommentDto>> => {
 	const response = await fetch(
-		`${config.userApiUrl}/v1/videos/${videoId}/comments`,
+		`${config.apiUrl}/v1/videos/${videoId}/comments`,
 		{
 			method: "GET",
 			headers: {
@@ -139,7 +115,7 @@ export const createVideoComment = async (
 	const { user, videoId, comment } = params;
 
 	const response = await fetch(
-		`${config.userApiUrl}/v1/videos/${videoId}/comments`,
+		`${config.apiUrl}/v1/videos/${videoId}/comments`,
 		{
 			method: "POST",
 			headers: {
@@ -165,7 +141,7 @@ type GetVideoByIdParams = {
 export const getVideoById = async (params: GetVideoByIdParams): Promise<VideoDto> => {
   const { userId, videoId } = params;
 
-  const response = await fetch(`${config.userApiUrl}/v1/videos/${videoId}`, {
+  const response = await fetch(`${config.apiUrl}/v1/videos/${videoId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
