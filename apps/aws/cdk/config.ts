@@ -8,9 +8,9 @@ export class Config {
   static readonly envName = process.env.ENVIRONMENT || 'dev';
   static readonly appName = `${Config.project}-${Config.envName}`;
 
-  static readonly webBuildPath = '../apps/web/dist';
-  static readonly adminUiBuildPath = '../apps/admin-ui/dist';
-  static readonly backendPath = join(__dirname, '../../apps/backend');
+  static readonly webBuildPath = '../web/dist';
+  static readonly adminUiBuildPath = '../admin-ui/dist';
+  static readonly backendPath = join(__dirname, '../../backend');
 
   static get cloudFrontPublicKey(): string {
     const cfPublicKeyPath = process.env.CF_PUBLIC_KEY_PATH;
