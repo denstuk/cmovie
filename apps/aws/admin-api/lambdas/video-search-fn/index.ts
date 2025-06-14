@@ -1,22 +1,24 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { errorMiddleware } from '../../common/middlewares';
-import { okResponse } from '../../common/responses';
-import { PgClient } from '../../services/pg.client';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { errorMiddleware } from "../../common/middlewares";
+import { okResponse } from "../../common/responses";
+import { PgClient } from "../../services/pg.client";
 
 // Interface based on the VideoEntity from the backend project
 interface Video {
-  id: string;
-  title: string;
-  description: string | null;
-  fileKey: string;
-  tags: string[];
-  regionsBlocked: string[];
-  createdAt: string;
-  updatedAt: string;
+	id: string;
+	title: string;
+	description: string | null;
+	fileKey: string;
+	tags: string[];
+	regionsBlocked: string[];
+	createdAt: string;
+	updatedAt: string;
 }
 
-const _handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  const query = `
+const _handler = async (
+	event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
+	const query = `
     SELECT
       id,
       title,
@@ -31,9 +33,9 @@ const _handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyRes
     LIMIT $1
   `;
 
-  // TODO: Hardcode limit for simplicity
-  const videos = await PgClient.query<Video>(query, [100]);
-  return okResponse({ videos });
+	// TODO: Hardcode limit for simplicity
+	const videos = await PgClient.query<Video>(query, [100]);
+	return okResponse({ videos });
 };
 
 export const handler = errorMiddleware(_handler);

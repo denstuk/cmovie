@@ -1,60 +1,66 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { CloudFrontClient, CreateInvalidationCommand } from "@aws-sdk/client-cloudfront";
-import { errorMiddleware } from '../../common/middlewares';
-import { okResponse } from '../../common/responses';
-import { PgClient } from '../../services/pg.client';
-import { z } from 'zod';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import {
+	CloudFrontClient,
+	CreateInvalidationCommand,
+} from "@aws-sdk/client-cloudfront";
+import { errorMiddleware } from "../../common/middlewares";
+import { okResponse } from "../../common/responses";
+import { PgClient } from "../../services/pg.client";
+import { z } from "zod";
 
 // Interface based on the VideoEntity from the backend project
 interface Video {
-  id: string;
-  title: string;
-  description: string | null;
-  fileKey: string;
-  tags: string[];
-  regionsBlocked: string[];
-  createdAt: Date;
-  updatedAt: Date;
+	id: string;
+	title: string;
+	description: string | null;
+	fileKey: string;
+	tags: string[];
+	regionsBlocked: string[];
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 // Validation schema for the request body
 const VideoMetadataSchema = z.object({
-  videoId: z.string().uuid({ message: "Video ID must be a valid UUID" }),
-  title: z.string().min(1, { message: "Title is required" }),
-  description: z.string().optional().nullable(),
-  tags: z.array(z.string()).optional().default([]),
-  regionsBlocked: z.array(z.string()).optional().default([]),
-  fileKey: z.string().optional(),
+	videoId: z.string().uuid({ message: "Video ID must be a valid UUID" }),
+	title: z.string().min(1, { message: "Title is required" }),
+	description: z.string().optional().nullable(),
+	tags: z.array(z.string()).optional().default([]),
+	regionsBlocked: z.array(z.string()).optional().default([]),
+	fileKey: z.string().optional(),
 });
 
-const _handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  // Add CORS headers to all responses
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Allow-Methods': 'OPTIONS,PUT,GET'
-  };
+const _handler = async (
+	event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
+	// Add CORS headers to all responses
+	const headers = {
+		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Headers": "Content-Type,Authorization",
+		"Access-Control-Allow-Methods": "OPTIONS,PUT,GET",
+	};
 
-  try {
-    // Parse and validate the request body
-    const requestBody = JSON.parse(event.body || '{}');
-    const parsedBody = VideoMetadataSchema.safeParse(requestBody);
+	try {
+		// Parse and validate the request body
+		const requestBody = JSON.parse(event.body || "{}");
+		const parsedBody = VideoMetadataSchema.safeParse(requestBody);
 
-    if (!parsedBody.success) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'Invalid request data',
-          details: parsedBody.error.format()
-        }),
-      };
-    }
+		if (!parsedBody.success) {
+			return {
+				statusCode: 400,
+				headers,
+				body: JSON.stringify({
+					error: "Invalid request data",
+					details: parsedBody.error.format(),
+				}),
+			};
+		}
 
-    const { videoId, title, description, tags, regionsBlocked, fileKey } = parsedBody.data;
+		const { videoId, title, description, tags, regionsBlocked, fileKey } =
+			parsedBody.data;
 
-    // Check if the video exists
-    const existingVideoQuery = `
+		// Check if the video exists
+		const existingVideoQuery = `
       SELECT
         id,
         file_key as "fileKey"
@@ -62,22 +68,26 @@ const _handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyRes
       WHERE id = $1
     `;
 
-    const existingVideos = await PgClient.query<Video>(existingVideoQuery, [videoId]);
-    const existingVideo = existingVideos.length > 0 ? existingVideos[0] : null;
+		const existingVideos = await PgClient.query<Video>(existingVideoQuery, [
+			videoId,
+		]);
+		const existingVideo = existingVideos.length > 0 ? existingVideos[0] : null;
 
-    if (!existingVideo && !fileKey) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Video not found and no fileKey provided' }),
-      };
-    }
+		if (!existingVideo && !fileKey) {
+			return {
+				statusCode: 400,
+				headers,
+				body: JSON.stringify({
+					error: "Video not found and no fileKey provided",
+				}),
+			};
+		}
 
-    const currentTimestamp = new Date();
-    const effectiveFileKey = fileKey || existingVideo?.fileKey || '';
+		const currentTimestamp = new Date();
+		const effectiveFileKey = fileKey || existingVideo?.fileKey || "";
 
-    // Update or insert video metadata in PostgreSQL (upsert)
-    const upsertQuery = `
+		// Update or insert video metadata in PostgreSQL (upsert)
+		const upsertQuery = `
       INSERT INTO t_video (
         id,
         title,
@@ -98,59 +108,64 @@ const _handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyRes
       RETURNING id
     `;
 
-    const params = [
-      videoId,
-      title,
-      description || '',
-      effectiveFileKey,
-      tags || [],
-      regionsBlocked || [],
-      currentTimestamp,
-    ];
+		const params = [
+			videoId,
+			title,
+			description || "",
+			effectiveFileKey,
+			tags || [],
+			regionsBlocked || [],
+			currentTimestamp,
+		];
 
-    await PgClient.query(upsertQuery, params);
+		await PgClient.query(upsertQuery, params);
 
-    // Handle CloudFront cache invalidation
-    const distributionId = process.env.DISTRIBUTION_ID;
-    if (distributionId && effectiveFileKey) {
-      const cloudfrontClient = new CloudFrontClient({ region: 'us-east-1' });
+		// Handle CloudFront cache invalidation
+		const distributionId = process.env.DISTRIBUTION_ID;
+		if (distributionId && effectiveFileKey) {
+			const cloudfrontClient = new CloudFrontClient({ region: "us-east-1" });
 
-      try {
-        console.log(`Invalidating CloudFront cache for distribution: ${distributionId}`);
-        await cloudfrontClient.send(
-          new CreateInvalidationCommand({
-            DistributionId: distributionId,
-            InvalidationBatch: {
-              Paths: {
-                Quantity: 1,
-                Items: [`/${effectiveFileKey}`]
-              },
-              CallerReference: `invalidate-${videoId}-${Date.now()}`
-            }
-          })
-        );
-        console.log('Cache invalidation initiated successfully');
-      } catch (invalidationError) {
-        console.error('Error invalidating CloudFront cache:', invalidationError);
-        // Continue execution even if invalidation fails
-      }
-    }
+			try {
+				console.log(
+					`Invalidating CloudFront cache for distribution: ${distributionId}`,
+				);
+				await cloudfrontClient.send(
+					new CreateInvalidationCommand({
+						DistributionId: distributionId,
+						InvalidationBatch: {
+							Paths: {
+								Quantity: 1,
+								Items: [`/${effectiveFileKey}`],
+							},
+							CallerReference: `invalidate-${videoId}-${Date.now()}`,
+						},
+					}),
+				);
+				console.log("Cache invalidation initiated successfully");
+			} catch (invalidationError) {
+				console.error(
+					"Error invalidating CloudFront cache:",
+					invalidationError,
+				);
+				// Continue execution even if invalidation fails
+			}
+		}
 
-    return okResponse({
-      message: 'Video metadata updated successfully',
-      videoId
-    });
-  } catch (error) {
-    console.error('Error updating video metadata:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Failed to update video metadata',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      })
-    };
-  }
+		return okResponse({
+			message: "Video metadata updated successfully",
+			videoId,
+		});
+	} catch (error) {
+		console.error("Error updating video metadata:", error);
+		return {
+			statusCode: 500,
+			headers,
+			body: JSON.stringify({
+				error: "Failed to update video metadata",
+				message: error instanceof Error ? error.message : "Unknown error",
+			}),
+		};
+	}
 };
 
 export const handler = errorMiddleware(_handler);
