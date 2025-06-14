@@ -13,7 +13,7 @@ type FargateServiceProps = {
   imagePath: string;
   containerPort: number;
   environment: Record<string, string>;
-  cloudfrontHeaderValue?: string; // Custom header value for CloudFront to ELB authentication
+  cloudfrontHeaderValue?: string;
 };
 
 export class FargateService extends Construct {
@@ -72,7 +72,6 @@ export class FargateService extends Construct {
       });
 
       // Create CloudFront distribution with the ALB as the origin
-      // TODO: Security review pass not all headers
       this.cloudFrontDistribution = new cloudfront.Distribution(this, `${Config.appName}-cf-distribution`, {
         defaultBehavior: {
           origin: new origins.LoadBalancerV2Origin(fargateService.loadBalancer, {

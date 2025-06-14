@@ -6,15 +6,19 @@ import { VideoCard } from "../../components/video-card";
 import { Page } from "../../components/page/page";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthContext } from "../../auth/auth.context";
-import type { VideoDto } from "../../api/types";
+import { useDebounce } from "../../hooks/useDebounce";
 
 export const HomePage: FC = () => {
 	const { user } = useAuthContext();
-	const [videos, setVideos] = useState<VideoDto[]>([]);
-	const [searchBy, setSearchBy] = useState<string>("");
+	const [inputValue, setInputValue] = useState<string>("");
+	const searchBy = useDebounce<string>(inputValue, 500);
 
-	const { isLoading, error } = useQuery({
-		queryKey: ["videos", searchBy],
+	const {
+		data: videos = [],
+		isLoading,
+		error
+	} = useQuery({
+		queryKey: ["videos", user?.userId, searchBy],
 		queryFn: async () => {
 			const { items } = await getVideos({
 				userId: user?.userId as string,
@@ -22,17 +26,9 @@ export const HomePage: FC = () => {
 				take: 20,
 				skip: 0,
 			});
-			setVideos(items || []);
+			return items || [];
 		},
 	});
-
-	if (isLoading && videos.length === 0) {
-		return (
-			<Page>
-				<PageLoader />
-			</Page>
-		);
-	}
 
 	if (error && videos.length === 0) {
 		return (
@@ -65,7 +61,8 @@ export const HomePage: FC = () => {
 						type="text"
 						placeholder="Search videos..."
 						className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-white focus:border-white"
-						onChange={(e) => setSearchBy(e.target.value.trim())}
+						onChange={(e) => setInputValue(e.target.value.trim())}
+						value={inputValue}
 					/>
 					<div className="absolute inset-y-0 right-0 flex items-center pr-3">
 						<svg
@@ -85,16 +82,18 @@ export const HomePage: FC = () => {
 				</div>
 			</div>
 
-			{videos.length === 0 ? (
-				<div className="text-center py-12">
+			{isLoading ? (
+        <PageLoader />
+      ) : videos.length === 0 ? (
+        <div className="text-center py-12">
 					<h2 className="text-xl font-semibold">No videos found</h2>
 				</div>
-			) : (
+      ) : (
 				<>
 					<div className="container mx-auto px-4">
 						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
 							{videos.map((video) => (
-								<div className="flex justify-center">
+								<div key={video.id} className="flex justify-center">
 									<VideoCard key={video.id} video={video} />
 								</div>
 							))}

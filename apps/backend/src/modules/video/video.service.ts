@@ -47,15 +47,12 @@ export class VideoService {
 
 		if (searchTerm) {
 			queryBuilder
-				.where("video.title ILIKE :searchTerm", {
-					searchTerm: `%${searchTerm}%`,
-				})
-				.orWhere("video.description ILIKE :searchTerm", {
-					searchTerm: `%${searchTerm}%`,
-				})
-				.orWhere("video.tags ILIKE :searchTerm", {
-					searchTerm: `%${searchTerm}%`,
-				});
+        .where("search_vector @@ plainto_tsquery('english', :searchTerm)", {
+          searchTerm
+        })
+        .orWhere("similarity(search_combined, :searchTerm) > 0.05", {
+          searchTerm,
+        });
 		}
 
 		const [items, total] = await queryBuilder
@@ -146,9 +143,6 @@ export class VideoService {
     }
 
     const blockedCountryCodes = new Set((video.regionsBlocked || []).map((country: string) => COUNTRY_CODES[country]));
-    console.log(blockedCountryCodes);
-    console.log(`Country code: ${country}`);
-
     if (country && blockedCountryCodes.has(country)) {
       throw new ForbiddenException('Access denied from your region');
     }

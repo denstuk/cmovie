@@ -2,33 +2,6 @@ import { config } from "../config";
 import type { Video } from "../models/video";
 import type { Paginated, UserInfo, VideoCommentDto, VideoDto } from "./types";
 
-/**
- * This file contains API functions for interacting with the backend services.
- */
-// export const videoGeneratePresignedUrl = async (
-// 	id: string,
-// 	videoUrl: string,
-// ): Promise<string> => {
-// 	const url = `${config.apiUrl}/videos/${id}/presigned-url`;
-
-// 	const response = await fetch(url, {
-// 		method: "POST",
-// 		headers: { "Content-Type": "application/json" },
-// 		body: JSON.stringify({ url: videoUrl }),
-// 	});
-
-// 	if (!response.ok) {
-// 		if (response.headers.get("Content-Type")?.includes("application/json")) {
-// 			const errorData: { message?: string } = await response.json();
-// 			throw new Error(errorData?.message || "Failed to generate presigned URL");
-// 		}
-// 		throw new Error("Failed to generate presigned URL");
-// 	}
-
-// 	const data = await response.json();
-// 	return data.signedUrl;
-// };
-
 type VideoGeneratePresignedUrlParams = {
   videoId: string;
   videoUrl: string;

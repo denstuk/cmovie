@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { env } from './env';
+import { formatAsPemKey } from './common/utils';
 
 export class Config {
   static readonly awsRegion = env.AWS_REGION || 'us-east-1';
@@ -14,28 +15,12 @@ export class Config {
   static readonly backendPath = join(__dirname, '../../backend');
 
   static get cloudFrontPublicKey(): string {
-    const cfPublicKeyPath = env.CF_PUBLIC_KEY_PATH;
-
-    if (!cfPublicKeyPath) {
-      throw new Error('CLOUDFRONT_PUBLIC_KEY_PATH is not set in environment variables');
-    }
-
-    const base64 = readFileSync(join(__dirname, cfPublicKeyPath), 'utf-8');
-    return `
-    -----BEGIN PUBLIC KEY-----
-    ${base64}
-    -----END PUBLIC KEY-----
-    `.trim();
+    const base64 = readFileSync(join(__dirname, env.CF_PUBLIC_KEY_PATH), 'utf-8');
+    return formatAsPemKey(base64);
   }
 
   static get cloudFrontPrivateKey(): string {
-    const cfPrivateKeyPath = env.CF_PRIVATE_KEY_PATH;
-
-    if (!cfPrivateKeyPath) {
-      throw new Error('CLOUDFRONT_PRIVATE_KEY_PATH is not set in environment variables');
-    }
-
-    return readFileSync(join(__dirname, cfPrivateKeyPath), 'utf-8');
+    return readFileSync(join(__dirname, env.CF_PRIVATE_KEY_PATH), 'utf-8');
   }
 
   static get cloudFrontAuthHeaderValue(): string {
