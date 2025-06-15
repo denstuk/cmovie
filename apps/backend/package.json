@@ -16,6 +16,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.828.0",
     "@aws-sdk/cloudfront-signer": "^3.821.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",

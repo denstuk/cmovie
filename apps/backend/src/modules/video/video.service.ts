@@ -7,10 +7,10 @@ import { VideoCommentCreateDto } from "./dtos/video-comment-create.dto";
 import { VideoCommentEntity } from "../../entities/video-comment.entity";
 import { VIDEO_COMMENT_REPO, VIDEO_REPO } from "../../database/database.repos";
 import { VideoSignedUrlDto } from "./dtos/video-signed-url.dto";
-import { COUNTRY_CODES, DEFAULT_VIEW_SIGNED_URL_EXPIRATION } from "../../common/constants";
-import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
+import { COUNTRY_CODES } from "../../common/constants";
 import { ConfigService } from "@nestjs/config";
 import { VideoDto } from "./dtos/video.dto";
+import { AwsService } from "../aws/aws.service";
 
 type SearchParams = {
 	searchTerm?: string;
@@ -36,6 +36,7 @@ export class VideoService {
 		@Inject(VIDEO_COMMENT_REPO)
 		private videoCommentRepository: Repository<VideoCommentEntity>,
     private readonly configService: ConfigService,
+    private readonly awsService: AwsService,
 	) {}
 
 	async search({
@@ -132,14 +133,7 @@ export class VideoService {
     }
 
     const domain = this.configService.getOrThrow<string>('CLOUDFRONT_DOMAIN');
-    const urlToSign = `https://${domain}/${video.fileKey}`;
-
-    const signedUrl = getSignedUrl({
-      url: urlToSign,
-      keyPairId: this.configService.getOrThrow<string>('CLOUDFRONT_KEY_PAIR_ID'),
-      privateKey: this.configService.getOrThrow<string>('CLOUDFRONT_PRIVATE_KEY'),
-      dateLessThan: new Date(Date.now() + DEFAULT_VIEW_SIGNED_URL_EXPIRATION),
-    });
+    const signedUrl = await this.awsService.generateSignedUrl(`https://${domain}/${video.fileKey}`);
 
     return { signedUrl };
   }

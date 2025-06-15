@@ -8,7 +8,6 @@ import { okResponse } from "../../common/responses";
 import { PgClient } from "../../services/pg.client";
 import { z } from "zod";
 
-// Interface based on the VideoEntity from the backend project
 interface Video {
 	id: string;
 	title: string;
@@ -20,7 +19,6 @@ interface Video {
 	updatedAt: Date;
 }
 
-// Validation schema for the request body
 const VideoMetadataSchema = z.object({
 	videoId: z.string().uuid({ message: "Video ID must be a valid UUID" }),
 	title: z.string().min(1, { message: "Title is required" }),
@@ -33,7 +31,6 @@ const VideoMetadataSchema = z.object({
 const _handler = async (
 	event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-	// Add CORS headers to all responses
 	const headers = {
 		"Access-Control-Allow-Origin": "*",
 		"Access-Control-Allow-Headers": "Content-Type,Authorization",

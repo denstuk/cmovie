@@ -11,7 +11,6 @@ const s3Client = new S3Client({ region: "us-east-1" });
 const _handler = async (
 	event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-	// Add CORS headers to all responses
 	const headers = {
 		"Access-Control-Allow-Origin": "*",
 		"Access-Control-Allow-Headers": "Content-Type,Authorization",
