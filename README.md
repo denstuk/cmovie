@@ -10,10 +10,11 @@
 
 ## Resources
 
+
+- User UI: https://cmovie.denstuk.com/ (https://d1adqvrgirg9oo.cloudfront.net/)
+- Admin UI: https://cmovie-admin.denstuk.com/ (https://d199ul832db6j6.cloudfront.net/)
 - User API: https://cmovie-api.d1adqvrgirg9oo.cloudfront.net
 - Admin API: https://dvqxaqn912.execute-api.us-east-1.amazonaws.com/prod
-- Admin Dashboard: https://d199ul832db6j6.cloudfront.net/
-- Web App: https://d1adqvrgirg9oo.cloudfront.net/
 - Neon Dashboard: https://console.neon.tech/app/projects/proud-haze-77654543?database=neondb
 
 ## Apps
