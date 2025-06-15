@@ -5,11 +5,13 @@ import { env } from "./env";
 import { formatAsPemKey } from "./utils";
 
 export class Config {
-	static readonly awsRegion = env.AWS_REGION || "us-east-1";
-	static readonly project = "cmovie";
-	static readonly envName = env.ENVIRONMENT || "dev";
+  static readonly project = "cmovie";
+  static readonly account = env.AWS_ACCOUNT_ID;
+	static readonly awsRegion = env.AWS_REGION;
+	static readonly envName = env.ENVIRONMENT;
 	static readonly appName = `${Config.project}-${Config.envName}`;
-
+	static readonly domainName = env.DOMAIN_NAME;
+  static readonly certArn = env.CERTIFICATE_ARN;
 	static readonly webBuildPath = "../web/dist";
 	static readonly adminUiBuildPath = "../admin-ui/dist";
 	static readonly backendPath = join(__dirname, "../../../backend");

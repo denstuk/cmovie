@@ -12,17 +12,24 @@ import {
 	ViewerProtocolPolicy,
 } from "aws-cdk-lib/aws-cloudfront";
 import { S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
+import { IHostedZone } from "aws-cdk-lib/aws-route53";
+import { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
+import * as route53 from "aws-cdk-lib/aws-route53";
+import * as route53_targets from "aws-cdk-lib/aws-route53-targets";
 
 export type WebDeploymentProps = {
 	name: string;
 	webBuildPath: string;
+	zone?: IHostedZone;
+	cert?: ICertificate;
+	subDomain?: string;
 };
 
 export class WebDeployment extends Construct {
 	constructor(scope: Construct, id: string, props: WebDeploymentProps) {
 		super(scope, id);
 
-		const { name, webBuildPath } = props;
+		const { name, webBuildPath, zone, cert, subDomain } = props;
 		const prefix = `${Config.appName}-${name}`;
 
 		const s3Bucket = new Bucket(this, `${prefix}-web-s3`, {
@@ -60,8 +67,24 @@ export class WebDeployment extends Construct {
 						ttl: Duration.seconds(0),
 					},
 				],
+				...(zone && cert && subDomain
+					? {
+							domainNames: [`${subDomain}.${Config.domainName}`],
+							certificate: cert,
+						}
+					: {}),
 			},
 		);
+
+		if (zone && cert && subDomain) {
+			new route53.ARecord(this, `${Config.appName}-ar-${subDomain}`, {
+				zone,
+				recordName: subDomain,
+				target: route53.RecordTarget.fromAlias(
+					new route53_targets.CloudFrontTarget(distribution),
+				),
+			});
+		}
 
 		new BucketDeployment(this, `${prefix}-s3-deployment`, {
 			sources: [Source.asset(webBuildPath)],

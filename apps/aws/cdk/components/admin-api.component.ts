@@ -67,7 +67,7 @@ export class AdminApiComponent extends Construct {
 				},
 			},
 		);
-    // Grant permissions to read/write to the S3 bucket, TODO: Update?
+		// Grant permissions to read/write to the S3 bucket, TODO: Update?
 		videoStorage.s3Temp.grantReadWrite(videoCreateUploadSignedUrlFn);
 		const videoCreateUploadSignedUrlFnIntegration =
 			new apigateway.LambdaIntegration(videoCreateUploadSignedUrlFn);
@@ -89,7 +89,7 @@ export class AdminApiComponent extends Construct {
 					POSTGRES_USER: env.USER_API_DB_USER,
 					POSTGRES_PASS: env.USER_API_DB_PASS,
 				},
-        bundling: { forceDockerBundling: false, }
+				bundling: { forceDockerBundling: false },
 			},
 		);
 		const videoSetMetadataFnIntegration = new apigateway.LambdaIntegration(
@@ -114,7 +114,7 @@ export class AdminApiComponent extends Construct {
 					POSTGRES_USER: env.USER_API_DB_USER,
 					POSTGRES_PASS: env.USER_API_DB_PASS,
 				},
-        bundling: { forceDockerBundling: false, }
+				bundling: { forceDockerBundling: false },
 			},
 		);
 		const videoSearchFnIntegration = new apigateway.LambdaIntegration(

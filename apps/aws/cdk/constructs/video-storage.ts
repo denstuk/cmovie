@@ -24,13 +24,17 @@ export class VideoStorage extends Construct {
 	constructor(scope: Construct, id: string) {
 		super(scope, id);
 
-    const mediaConvertRole = new iam.Role(this, `${Config.appName}-mediaconvert-role`, {
-      roleName: `${Config.appName}-MediaConvertRole`,
-      assumedBy: new iam.ServicePrincipal("mediaconvert.amazonaws.com"),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess"),
-      ],
-    });
+		const mediaConvertRole = new iam.Role(
+			this,
+			`${Config.appName}-mediaconvert-role`,
+			{
+				roleName: `${Config.appName}-MediaConvertRole`,
+				assumedBy: new iam.ServicePrincipal("mediaconvert.amazonaws.com"),
+				managedPolicies: [
+					iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess"),
+				],
+			},
+		);
 
 		// S3 Bucket for Temporary Videos (Uploads)
 		this.s3Temp = new Bucket(this, `${Config.appName}-video-temp-storage-s3`, {
@@ -49,7 +53,7 @@ export class VideoStorage extends Construct {
 			],
 			encryption: BucketEncryption.S3_MANAGED,
 			enforceSSL: true,
-      cors: [
+			cors: [
 				{
 					allowedMethods: [
 						HttpMethods.GET,
@@ -101,24 +105,26 @@ export class VideoStorage extends Construct {
 				environment: {
 					TEMPORARY_BUCKET: this.s3Temp.bucketName,
 					DESTINATION_BUCKET: this.s3.bucketName,
-          MEDIA_CONVERT_ROLE_ARN: mediaConvertRole.roleArn,
+					MEDIA_CONVERT_ROLE_ARN: mediaConvertRole.roleArn,
 				},
 			},
 		);
 
-    onUploadProcessorFn.addToRolePolicy(new iam.PolicyStatement({
-      actions: ["iam:PassRole"],
-      resources: [mediaConvertRole.roleArn],
-    }));
-    // TODO:Fix hardcode after testing
-    onUploadProcessorFn.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["mediaconvert:CreateJob"],
-        resources: [
-          "arn:aws:mediaconvert:us-east-1:404332415688:queues/Default",
-        ],
-      }),
-    );
+		onUploadProcessorFn.addToRolePolicy(
+			new iam.PolicyStatement({
+				actions: ["iam:PassRole"],
+				resources: [mediaConvertRole.roleArn],
+			}),
+		);
+		// TODO:Fix hardcode after testing
+		onUploadProcessorFn.addToRolePolicy(
+			new iam.PolicyStatement({
+				actions: ["mediaconvert:CreateJob"],
+				resources: [
+					"arn:aws:mediaconvert:us-east-1:404332415688:queues/Default",
+				],
+			}),
+		);
 
 		this.s3Temp.grantReadWrite(onUploadProcessorFn);
 		this.s3Temp.grantDelete(onUploadProcessorFn);

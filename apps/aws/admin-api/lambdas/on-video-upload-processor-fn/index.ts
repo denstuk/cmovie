@@ -35,25 +35,25 @@ const _handler: S3Handler = async (event: S3Event) => {
 			continue;
 		}
 
-    const [p1, p2] = key.split('/');
+		const [p1, p2] = key.split("/");
 
 		// Copy to final destination bucket
 		await s3Client.send(
 			new CopyObjectCommand({
 				Bucket: destBucket,
-				Key: [p1, p2, 'video'].join('/'),
+				Key: [p1, p2, "video"].join("/"),
 				CopySource: `${tempBucket}/${key}`,
 				ContentType: contentType,
 			}),
 		);
 
-    await convertMedia({
-      tempKey: key,
-      tempBucket: tempBucket,
-      destKey: [p1, p2].join('/'),
-      destBucket: destBucket,
-      roleArn: process.env.MEDIA_CONVERT_ROLE_ARN as string,
-    });
+		await convertMedia({
+			tempKey: key,
+			tempBucket: tempBucket,
+			destKey: [p1, p2].join("/"),
+			destBucket: destBucket,
+			roleArn: process.env.MEDIA_CONVERT_ROLE_ARN as string,
+		});
 	}
 };
 
