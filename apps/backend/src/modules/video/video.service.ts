@@ -10,6 +10,7 @@ import { VideoSignedUrlDto } from "./dtos/video-signed-url.dto";
 import { COUNTRY_CODES, DEFAULT_VIEW_SIGNED_URL_EXPIRATION } from "../../common/constants";
 import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
 import { ConfigService } from "@nestjs/config";
+import { VideoDto } from "./dtos/video.dto";
 
 type SearchParams = {
 	searchTerm?: string;
@@ -41,7 +42,7 @@ export class VideoService {
 		searchTerm,
 		take,
 		skip,
-	}: SearchParams): Promise<Paginated<VideoEntity>> {
+	}: SearchParams): Promise<Paginated<VideoDto>> {
 		const queryBuilder = this.videoRepository.createQueryBuilder("video");
 
 		if (searchTerm) {
@@ -60,14 +61,14 @@ export class VideoService {
 			.getManyAndCount();
 
 		return {
-			items,
+			items: items.map(this.asVideoDto),
 			total,
 			take: take || 10,
 			skip: skip || 0,
 		};
 	}
 
-	async getById(id: string): Promise<VideoEntity> {
+	async getById(id: string): Promise<VideoDto> {
 		const video = await this.videoRepository.findOne({
 			where: { id },
 		});
@@ -76,7 +77,7 @@ export class VideoService {
 			throw new NotFoundException("Video not found");
 		}
 
-		return video;
+		return this.asVideoDto(video);
 	}
 
 	async getComments(videoId: string): Promise<Paginated<VideoCommentEntity>> {
@@ -141,5 +142,17 @@ export class VideoService {
     });
 
     return { signedUrl };
+  }
+
+  private asVideoDto(video: VideoEntity): VideoDto {
+    return {
+      id: video.id,
+      title: video.title,
+      description: video.description,
+      fileKey: video.fileKey,
+      updatedAt: video.updatedAt,
+      createdAt: video.createdAt,
+      tags: video.tags,
+    }
   }
 }
