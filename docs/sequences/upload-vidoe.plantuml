@@ -1,0 +1,60 @@
+@startuml "Moderated Video Upload & Processing Flow"
+' Enable better visuals
+skinparam monochrome false
+skinparam shadowing true
+skinparam sequence {
+    ArrowColor #2E86C1
+    ActorBorderColor black
+    LifeLineBorderColor #117A65
+    LifeLineBackgroundColor #D5F5E3
+    ParticipantBackgroundColor #F9E79F
+    ParticipantBorderColor #B7950B
+    BoxBackgroundColor #FDFEFE
+    BoxBorderColor gray
+    GroupBorderColor #ABB2B9
+    GroupBackgroundColor #EBF5FB
+}
+autonumber
+
+title <u><b>Video Upload & Processing Flow</b></u>
+
+participant "🧑‍💻 Content Moderator" as Moderator
+participant "🖥️ Admin UI" as UI
+participant "🌐 Admin API" as API
+participant "🗂️ Temp S3 Bucket" as S3Temp
+participant "⚙️ Lambda - Preprocessor" as LambdaPre
+participant "🧾 Database" as DB
+participant "🎞️ Video Transcoder" as Transcoder
+participant "📦 Final S3 Bucket" as S3Final
+participant "🧹 Lambda - Invalidator" as LambdaInv
+
+== 🟡 Step 1: Upload to Temporary S3 ==
+
+Moderator -> UI: Select & Upload video
+UI -> API: Request signed S3 URL
+API -> S3Temp: Generate signed URL
+S3Temp --> API: Return signed URL
+API --> UI: Deliver signed URL
+UI -> S3Temp: Upload raw video
+S3Temp -> LambdaPre: Trigger on upload event
+
+== 🔵 Step 2: Preprocess & Transcode ==
+
+LambdaPre -> DB: Save initial metadata
+LambdaPre -> Transcoder: Start transcoding job
+Transcoder -> S3Final: Store transcoded video
+
+== 🟢 Step 3: Invalidate Cache & Notify ==
+
+S3Final -> LambdaInv: Trigger on final upload
+
+== 🟣 Step 4: Finalize Metadata ==
+
+UI --> UI: Show "Upload Complete"
+UI -> API: Submit final video metadata
+API -> DB: Update metadata
+DB --> API: Confirm update
+API --> UI: Acknowledge success
+UI -> Moderator: Video upload complete ✅
+
+@enduml

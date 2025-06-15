@@ -1,0 +1,49 @@
+@startuml "View Video Flow"
+
+' ✨ Visual Enhancements
+skinparam monochrome false
+skinparam shadowing true
+skinparam sequence {
+    ArrowColor #1F618D
+    ActorBorderColor black
+    LifeLineBorderColor #1D8348
+    LifeLineBackgroundColor #D4EFDF
+    ParticipantBackgroundColor #FAD7A0
+    ParticipantBorderColor #B9770E
+    BoxBackgroundColor #FDFEFE
+    BoxBorderColor #D5D8DC
+    GroupBorderColor #ABB2B9
+    GroupBackgroundColor #EBF5FB
+}
+autonumber
+
+title <u><b>🎥 View Video Flow</b></u>
+
+participant "🧑‍💻 End User" as User
+participant "💻 Web UI" as UI
+participant "🌐 User API" as API
+participant "🧾 Database" as DB
+participant "🚀 CloudFront CDN" as CDN
+
+== 🟡 Step 1: Request Metadata ==
+
+User -> UI: Select video to watch
+UI -> API: Get video metadata + comments
+API -> DB: Query metadata & comments
+DB --> API: Return metadata & comments
+API --> UI: Deliver metadata & comments
+
+== 🔵 Step 2: Get Video Access URL ==
+
+UI -> API: Request signed CloudFront URL
+API -> CDN: Generate signed video URL
+CDN --> API: Signed URL
+API --> UI: Send signed URL to UI
+
+== 🟢 Step 3: Stream Video ==
+
+UI -> CDN: Fetch video using signed URL
+CDN --> UI: Deliver video stream
+UI -> User: Display video, metadata, and comments 🎬
+
+@enduml
