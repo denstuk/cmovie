@@ -3,33 +3,6 @@ import type { Video } from "../models/video";
 import type { VideoDto } from "./types";
 
 /**
- * This file contains API functions for interacting with the backend services.
- */
-export const videoGeneratePresignedUrl = async (
-	id: string,
-	videoUrl: string,
-): Promise<string> => {
-	const url = `${config.apiUrl}/videos/${id}/presigned-url`;
-
-	const response = await fetch(url, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ url: videoUrl }),
-	});
-
-	if (!response.ok) {
-    if (response.headers.get("Content-Type")?.includes("application/json")) {
-      const errorData: { message?: string } = await response.json();
-      throw new Error(errorData?.message || 'Failed to generate presigned URL');
-    }
-		throw new Error("Failed to generate presigned URL");
-	}
-
-	const data = await response.json();
-	return data.signedUrl;
-};
-
-/**
  * Updates video metadata
  * @param videoId The ID of the video to update
  * @param metadata The metadata to update

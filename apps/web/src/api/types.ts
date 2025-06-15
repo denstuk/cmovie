@@ -10,7 +10,7 @@ export interface UserInfo {
 	username: string;
 }
 
-export interface VideoDto {
+export interface Video {
 	id: string;
 	title: string;
 	description: string | null;
@@ -20,7 +20,7 @@ export interface VideoDto {
 	updatedAt: string;
 }
 
-export type VideoCommentDto = {
+export type VideoComment = {
 	id: string;
 	videoId: string;
 	userId: string;

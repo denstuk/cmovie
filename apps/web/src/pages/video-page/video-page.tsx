@@ -2,47 +2,41 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
-import { getVideoById, videoGeneratePresignedUrl } from "../../api/api";
+import { getVideoById, generateSignedUrl } from "../../api/api";
 import { PageLoader } from "../../components/page-loader";
-import { config } from "../../config";
 import { Page } from "../../components/page/page";
 import { CommentsSection } from "./comments-section/comments-section";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthContext } from "../../auth/auth.context";
 
-// Get the video URL from the fileKey
-const getVideoUrl = (fileKey: string) => `https://${config.cloudfrontDomain}/${fileKey}`;
-
 export const VideoPage: FC = () => {
-  const { user } = useAuthContext();
+	const { user } = useAuthContext();
 	const { videoId } = useParams<{ videoId: string }>();
 	const VIDEO_PROGRESS_KEY = `video-progress-${videoId}`;
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+	const videoRef = useRef<HTMLVideoElement>(null);
 	const [signedVideoUrl, setSignedVideoUrl] = useState<string | null>(null);
 
-  const {
-    isLoading,
-    error,
-    data: video,
-  } = useQuery({
-    queryKey: ["video", videoId, user],
-    queryFn: async () => {
-      if (!user || !videoId) return;
+	const {
+		isLoading,
+		error,
+		data: video,
+	} = useQuery({
+		queryKey: ["video", videoId, user],
+		queryFn: async () => {
+			if (!user || !videoId) return;
+			const userId = user.userId;
 
-      const video = await getVideoById({ userId: user.userId, videoId });
-      const videoUrl = getVideoUrl(video.fileKey);
-      const signedUrl = await videoGeneratePresignedUrl({
-        videoId: video.id as string,
-        videoUrl,
-        userId: user.userId,
-      });
-      setSignedVideoUrl(signedUrl);
+			const [video, signedUrl] = await Promise.all([
+				getVideoById({ userId, videoId }),
+				generateSignedUrl({ userId, videoId }),
+			]);
+			setSignedVideoUrl(signedUrl);
 
-      return video;
-    },
-    retry: false,
-  });
+			return video;
+		},
+		retry: false,
+	});
 
 	useEffect(() => {
 		const video = videoRef.current;
@@ -66,10 +60,10 @@ export const VideoPage: FC = () => {
 		};
 	}, [VIDEO_PROGRESS_KEY, video]);
 
-  const onShare = useCallback(async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    toast.info("Video URL copied to clipboard!");
-  }, [])
+	const onShare = useCallback(async () => {
+		await navigator.clipboard.writeText(window.location.href);
+		toast.info("Video URL copied to clipboard!");
+	}, []);
 
 	if (isLoading) {
 		return (
@@ -103,7 +97,7 @@ export const VideoPage: FC = () => {
 				<div className="flex justify-between items-center">
 					<h1 className="text-4xl font-bold text-white">{video.title}</h1>
 					<button
-            type="button"
+						type="button"
 						onClick={onShare}
 						className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-all cursor-pointer"
 					>
@@ -118,9 +112,7 @@ export const VideoPage: FC = () => {
 						Share
 					</button>
 				</div>
-				<p className="mt-4 text-lg text-gray-100">
-					{video.tags.join(", ")}
-				</p>
+				<p className="mt-4 text-lg text-gray-100">{video.tags.join(", ")}</p>
 
 				{/* Video container with responsive width */}
 				<div className="w-full mt-4">

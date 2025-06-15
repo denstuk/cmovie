@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { Link } from "react-router";
-import type { VideoDto } from "../../api/types";
+import type { Video } from "../../api/types";
 
 // TODO: For now, we'll use placeholder images
 const getThumbnailUrl = (date: string) => {
@@ -9,7 +9,7 @@ const getThumbnailUrl = (date: string) => {
 };
 
 type VideoCardProps = {
-	video: VideoDto;
+	video: Video;
 };
 
 export const VideoCard: FC<VideoCardProps> = ({ video }) => {

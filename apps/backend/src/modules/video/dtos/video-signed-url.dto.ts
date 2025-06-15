@@ -1,9 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class VideoSignedUrlGenerateDto {
-	readonly url: string;
-}
-
 export class VideoSignedUrlDto {
 	@ApiProperty({
 		description: "The signed URL for the video file",

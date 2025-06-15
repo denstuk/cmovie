@@ -1,7 +1,6 @@
 import { useCallback, useState, type FC } from "react";
 import { useAuthContext } from "../../../auth/auth.context";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { VideoCommentDto } from "../../../api/types";
 import { createVideoComment, getVideoComments } from "../../../api/api";
 import { toast } from "sonner";
 
@@ -13,8 +12,6 @@ export const CommentsSection: FC<CommentsSectionProps> = ({
 	videoId,
 }: CommentsSectionProps) => {
 	const { user } = useAuthContext();
-
-	const [comments, setComments] = useState<VideoCommentDto[]>();
 	const [comment, setComment] = useState<string>("");
 
 	const { mutate: createComment } = useMutation({
@@ -32,40 +29,27 @@ export const CommentsSection: FC<CommentsSectionProps> = ({
 		},
 	});
 
-	useQuery({
+	const { data: comments, refetch: refetchComments } = useQuery({
 		queryKey: ["videoComments", videoId, user],
 		queryFn: async () => {
 			if (!user || !videoId) return [];
 			const paginated = await getVideoComments(user, videoId);
-			setComments(paginated.items || []);
+			return paginated.items || [];
 		},
 		retry: 2,
 	});
 
-	const onCreateComment = useCallback(async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!comment.trim()) return;
+	const onCreateComment = useCallback(
+		async (e: React.FormEvent) => {
+			e.preventDefault();
+			if (!comment.trim()) return;
 
-		// Optimistically update the comments state
-		setComments((prev) => [
-			{
-				id: Date.now().toString(),
-				videoId: videoId as string,
-				userId: user?.userId as string,
-				user: {
-					username: user?.username || "Anonymous",
-					id: user?.userId || "unknown",
-				},
-				comment,
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			},
-			...(prev || []),
-		]);
-
-		await createComment(comment.trim());
-		setComment("");
-	}, []);
+			await createComment(comment.trim());
+			await refetchComments();
+			setComment("");
+		},
+		[comment, setComment, refetchComments],
+	);
 
 	return (
 		<div className="mt-8">

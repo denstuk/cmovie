@@ -20,7 +20,6 @@ import { UserEntity } from "../../entities/user.entity";
 import { VideoCommentEntity } from "../../entities/video-comment.entity";
 import {
 	VideoSignedUrlDto,
-	VideoSignedUrlGenerateDto,
 } from "./dtos/video-signed-url.dto";
 
 @Controller("videos")
@@ -47,14 +46,12 @@ export class VideoController {
 		@CurrentUser() user: UserEntity,
 		@Req() request: Request,
 		@Param("id") videoId: string,
-		@Body() body: VideoSignedUrlGenerateDto,
 	): Promise<VideoSignedUrlDto> {
 		const country = request.headers["cloudfront-viewer-country"] as string;
 		const userId = user.id;
 
 		return this.videoService.getSignedUrl({
 			country,
-			url: body.url,
 			videoId,
 			userId,
 		});

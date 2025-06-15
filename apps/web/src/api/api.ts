@@ -1,26 +1,20 @@
 import { config } from "../config";
-import type { Paginated, UserInfo, VideoCommentDto, VideoDto } from "./types";
+import type { Paginated, UserInfo, VideoComment, Video } from "./types";
 
-type VideoGeneratePresignedUrlParams = {
-  videoId: string;
-  videoUrl: string;
-  userId: string;
+type GenerateSignedUrlParams = {
+	videoId: string;
+	userId: string;
 };
 
-export const videoGeneratePresignedUrl = async ({
-  videoId,
-  videoUrl,
-  userId
-}: VideoGeneratePresignedUrlParams): Promise<string> => {
+export const generateSignedUrl = async ({
+	videoId,
+	userId,
+}: GenerateSignedUrlParams): Promise<string> => {
 	const url = `${config.apiUrl}/v1/videos/${videoId}/signed-url`;
 
 	const response = await fetch(url, {
 		method: "POST",
-		headers: {
-			"X-Api-Token": userId,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({ url: videoUrl }),
+		headers: { "X-Api-Token": userId },
 	});
 
 	if (!response.ok) {
@@ -44,7 +38,7 @@ type GetVideosParams = {
 
 export const getVideos = async (
 	params: GetVideosParams,
-): Promise<Paginated<VideoDto>> => {
+): Promise<Paginated<Video>> => {
 	const url = new URL(`${config.apiUrl}/v1/videos`);
 	if (params.searchTerm) {
 		url.searchParams.append("searchTerm", params.searchTerm);
@@ -82,7 +76,7 @@ export const signIn = async (username: string): Promise<UserInfo> => {
 export const getVideoComments = async (
 	user: UserInfo,
 	videoId: string,
-): Promise<Paginated<VideoCommentDto>> => {
+): Promise<Paginated<VideoComment>> => {
 	const response = await fetch(
 		`${config.apiUrl}/v1/videos/${videoId}/comments`,
 		{
@@ -134,27 +128,29 @@ export const createVideoComment = async (
 };
 
 type GetVideoByIdParams = {
-  userId: string;
-  videoId: string;
+	userId: string;
+	videoId: string;
 };
 
-export const getVideoById = async (params: GetVideoByIdParams): Promise<VideoDto> => {
-  const { userId, videoId } = params;
+export const getVideoById = async (
+	params: GetVideoByIdParams,
+): Promise<Video> => {
+	const { userId, videoId } = params;
 
-  const response = await fetch(`${config.apiUrl}/v1/videos/${videoId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Api-Token": userId,
-    },
-  });
+	const response = await fetch(`${config.apiUrl}/v1/videos/${videoId}`, {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+			"X-Api-Token": userId,
+		},
+	});
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error("Video not found");
-    }
-    throw new Error(`Failed to fetch video: ${response.statusText}`);
-  }
+	if (!response.ok) {
+		if (response.status === 404) {
+			throw new Error("Video not found");
+		}
+		throw new Error(`Failed to fetch video: ${response.statusText}`);
+	}
 
-  return await response.json();
+	return await response.json();
 };

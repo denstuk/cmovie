@@ -23,7 +23,6 @@ type VideoCommentCreateParams = VideoCommentCreateDto & {
 
 type GetSignedUrlParams = {
 	country: string;
-	url: string;
 	videoId: string;
 	userId: string;
 };
@@ -120,7 +119,6 @@ export class VideoService {
 	async getSignedUrl({
     country,
 		videoId,
-    url,
 	}: GetSignedUrlParams): Promise<VideoSignedUrlDto> {
     const video = await this.videoRepository.findOneBy({ id: videoId });
     if (!video) {
@@ -132,8 +130,11 @@ export class VideoService {
       throw new ForbiddenException('Access denied from your region');
     }
 
+    const domain = this.configService.getOrThrow<string>('CLOUDFRONT_DOMAIN');
+    const urlToSign = `https://${domain}/${video.fileKey}`;
+
     const signedUrl = getSignedUrl({
-      url,
+      url: urlToSign,
       keyPairId: this.configService.getOrThrow<string>('CLOUDFRONT_KEY_PAIR_ID'),
       privateKey: this.configService.getOrThrow<string>('CLOUDFRONT_PRIVATE_KEY'),
       dateLessThan: new Date(Date.now() + DEFAULT_VIEW_SIGNED_URL_EXPIRATION),

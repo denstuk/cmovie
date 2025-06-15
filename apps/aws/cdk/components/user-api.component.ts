@@ -25,6 +25,7 @@ export class UserApiComponent extends Construct {
 				DB_USER: process.env.USER_API_DB_USER as string,
 				DB_PASS: process.env.USER_API_DB_PASS as string,
 				DB_NAME: process.env.USER_API_DB_NAME as string,
+        CLOUDFRONT_DOMAIN: videoStorage.distribution.domainName,
 				CLOUDFRONT_KEY_PAIR_ID: videoStorage.key.publicKeyId,
 				CLOUDFRONT_PRIVATE_KEY: Config.cloudFrontPrivateKey,
 			},

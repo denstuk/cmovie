@@ -14,14 +14,17 @@ export const WhoIsWatching = () => {
 	return (
 		<div className="flex flex-col items-center justify-center h-screen text-white">
 			<h1 className="text-5xl mb-8">Who's watching?</h1>
-			<form onSubmit={handleSubmit} className="flex flex-col gap-2 items-center">
-         <input
-						type="text"
-						placeholder="Enter your name"
-						className="w-[350px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-white focus:border-white"
-						onChange={(e) => setName(e.target.value)}
-            maxLength={50}
-					/>
+			<form
+				onSubmit={handleSubmit}
+				className="flex flex-col gap-2 items-center"
+			>
+				<input
+					type="text"
+					placeholder="Enter your name"
+					className="w-[350px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-white focus:border-white"
+					onChange={(e) => setName(e.target.value)}
+					maxLength={50}
+				/>
 				<button
 					type="submit"
 					disabled={isLoading}

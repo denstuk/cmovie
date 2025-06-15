@@ -16,7 +16,7 @@ export const HomePage: FC = () => {
 	const {
 		data: videos = [],
 		isLoading,
-		error
+		error,
 	} = useQuery({
 		queryKey: ["videos", user?.userId, searchBy],
 		queryFn: async () => {
@@ -63,7 +63,7 @@ export const HomePage: FC = () => {
 						className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-white focus:border-white"
 						onChange={(e) => setInputValue(e.target.value.trim())}
 						value={inputValue}
-            maxLength={50}
+						maxLength={50}
 					/>
 					<div className="absolute inset-y-0 right-0 flex items-center pr-3">
 						<svg
@@ -84,12 +84,12 @@ export const HomePage: FC = () => {
 			</div>
 
 			{isLoading ? (
-        <PageLoader />
-      ) : videos.length === 0 ? (
-        <div className="text-center py-12">
+				<PageLoader />
+			) : videos.length === 0 ? (
+				<div className="text-center py-12">
 					<h2 className="text-xl font-semibold">No videos found</h2>
 				</div>
-      ) : (
+			) : (
 				<>
 					<div className="container mx-auto px-4">
 						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
