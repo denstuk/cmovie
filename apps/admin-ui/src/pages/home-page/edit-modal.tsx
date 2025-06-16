@@ -9,7 +9,12 @@ export interface EditModalProps {
 	onSave: (video: Video) => Promise<void>;
 }
 
-export const EditModal = ({ video, isOpen, onClose, onSave }: EditModalProps) => {
+export const EditModal = ({
+	video,
+	isOpen,
+	onClose,
+	onSave,
+}: EditModalProps) => {
 	const [editedVideo, setEditedVideo] = useState<Video>(video);
 	const [currentTag, setCurrentTag] = useState("");
 	const [isSaving, setIsSaving] = useState(false);

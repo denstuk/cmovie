@@ -51,7 +51,9 @@ const Header = () => {
 			<div className="px-4 py-3 lg:px-8 flex items-center justify-between">
 				{/* Left section */}
 				<div className="flex items-center space-x-8">
-					<h1 className="text-red-600 text-2xl font-bold">CMOVIE | Dashboard</h1>
+					<h1 className="text-red-600 text-2xl font-bold">
+						CMOVIE | Dashboard
+					</h1>
 					<nav className="md:flex space-x-4">
 						<Link to="/" className="text-white hover:text-gray-300">
 							Home

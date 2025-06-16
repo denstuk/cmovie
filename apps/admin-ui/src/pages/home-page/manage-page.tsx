@@ -8,16 +8,11 @@ import { EditModal } from "./edit-modal";
 import type { Video } from "../../api/types";
 
 export const HomePage = () => {
-  const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 	const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
-	const {
-		data,
-		isLoading,
-		error,
-		refetch
-	} = useQuery({
-		queryKey: ['videos'],
+	const { data, isLoading, error, refetch } = useQuery({
+		queryKey: ["videos"],
 		queryFn: async () => {
 			try {
 				const response = await searchVideos("");
@@ -26,7 +21,7 @@ export const HomePage = () => {
 				};
 			} catch (err) {
 				console.error("Error fetching videos:", err);
-        toast.error("Failed to fetch videos");
+				toast.error("Failed to fetch videos");
 			}
 		},
 	});
@@ -36,24 +31,21 @@ export const HomePage = () => {
 	// Update video mutation
 	const updateMutation = useMutation({
 		mutationFn: async (updatedVideo: Video) => {
-			return await updateVideoMetadata(
-				updatedVideo.id,
-				{
-					title: updatedVideo.title,
-					description: updatedVideo.description,
-					tags: updatedVideo.tags,
-					regionsBlocked: updatedVideo.regionsBlocked,
-				}
-			);
+			return await updateVideoMetadata(updatedVideo.id, {
+				title: updatedVideo.title,
+				description: updatedVideo.description,
+				tags: updatedVideo.tags,
+				regionsBlocked: updatedVideo.regionsBlocked,
+			});
 		},
 		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: ['videos'] });
+			await queryClient.invalidateQueries({ queryKey: ["videos"] });
 			toast.success("Video metadata updated successfully");
 		},
 		onError: (error) => {
 			console.error("Error updating video metadata:", error);
 			toast.error("Failed to update video metadata");
-		}
+		},
 	});
 
 	// Handler for saving video updates
@@ -65,7 +57,9 @@ export const HomePage = () => {
 		<Page>
 			<div className="container mx-auto px-4 py-16 lg:px-8">
 				<div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">Content Management</h1>
+					<h1 className="text-4xl font-bold text-white mb-4">
+						Content Management
+					</h1>
 				</div>
 
 				{/* Videos List */}
@@ -77,7 +71,9 @@ export const HomePage = () => {
 							</div>
 						) : error ? (
 							<div className="py-4 text-center">
-								<p className="text-red-500 mb-2">{error instanceof Error ? error.message : "An error occurred"}</p>
+								<p className="text-red-500 mb-2">
+									{error instanceof Error ? error.message : "An error occurred"}
+								</p>
 								<button
 									type="button"
 									onClick={() => refetch()}
