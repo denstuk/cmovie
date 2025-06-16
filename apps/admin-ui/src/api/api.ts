@@ -1,13 +1,6 @@
 import { config } from "../config";
-import type { Video } from "../models/video";
-import type { VideoDto } from "./types";
+import type { Video } from "./types";
 
-/**
- * Updates video metadata
- * @param videoId The ID of the video to update
- * @param metadata The metadata to update
- * @returns The updated video
- */
 export const updateVideoMetadata = async (
 	videoId: string,
 	metadata: {
@@ -16,7 +9,7 @@ export const updateVideoMetadata = async (
 		tags: string[];
 		regionsBlocked: string[];
 	},
-): Promise<Video> => {
+): Promise<void> => {
 	const response = await fetch(`${config.apiUrl}/videos/metadata`, {
 		method: "PUT",
 		headers: {
@@ -41,7 +34,7 @@ export const updateVideoMetadata = async (
 export const searchVideos = async (
 	searchBy: string,
 ): Promise<{
-	videos: VideoDto[];
+	videos: Video[];
 }> => {
 	const url = new URL(`${config.apiUrl}/videos/search`);
 	if (searchBy) {

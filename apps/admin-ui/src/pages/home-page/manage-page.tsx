@@ -5,11 +5,11 @@ import { searchVideos, updateVideoMetadata } from "../../api/api";
 import { PageLoader } from "../../components/page-loader";
 import { Page } from "../page";
 import { EditModal } from "./edit-modal";
-import type { VideoDto } from "../../api/types";
+import type { Video } from "../../api/types";
 
 export const HomePage = () => {
   const queryClient = useQueryClient();
-	const [selectedVideo, setSelectedVideo] = useState<VideoDto | null>(null);
+	const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
 	const {
 		data,
@@ -35,7 +35,7 @@ export const HomePage = () => {
 
 	// Update video mutation
 	const updateMutation = useMutation({
-		mutationFn: async (updatedVideo: VideoDto) => {
+		mutationFn: async (updatedVideo: Video) => {
 			return await updateVideoMetadata(
 				updatedVideo.id,
 				{
@@ -57,13 +57,8 @@ export const HomePage = () => {
 	});
 
 	// Handler for saving video updates
-	const handleSaveVideo = async (updatedVideo: VideoDto) => {
-		try {
-			await updateMutation.mutateAsync(updatedVideo);
-			return Promise.resolve();
-		} catch (error) {
-			return Promise.reject(error);
-		}
+	const handleSaveVideo = async (updatedVideo: Video) => {
+		await updateMutation.mutateAsync(updatedVideo);
 	};
 
 	return (

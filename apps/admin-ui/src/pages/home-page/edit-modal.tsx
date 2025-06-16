@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { COUNTRIES } from "../../constants/countries";
-import type { VideoDto } from "../../api/types";
+import type { Video } from "../../api/types";
 
 export interface EditModalProps {
-	video: VideoDto;
+	video: Video;
 	isOpen: boolean;
 	onClose: () => void;
-	onSave: (video: VideoDto) => Promise<void>;
+	onSave: (video: Video) => Promise<void>;
 }
 
 export const EditModal = ({ video, isOpen, onClose, onSave }: EditModalProps) => {
-	const [editedVideo, setEditedVideo] = useState<VideoDto>(video);
+	const [editedVideo, setEditedVideo] = useState<Video>(video);
 	const [currentTag, setCurrentTag] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 
