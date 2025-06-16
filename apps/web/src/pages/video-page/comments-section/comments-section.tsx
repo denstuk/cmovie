@@ -14,7 +14,17 @@ export const CommentsSection: FC<CommentsSectionProps> = ({
 	const { user } = useAuthContext();
 	const [comment, setComment] = useState<string>("");
 
-	const { mutate: createComment } = useMutation({
+	const { data: comments, refetch: refetchComments } = useQuery({
+		queryKey: ["videoComments", videoId, user],
+		queryFn: async () => {
+			if (!user || !videoId) return [];
+			const paginated = await getVideoComments(user, videoId);
+			return paginated.items || [];
+		},
+		retry: 2,
+	});
+
+  const { mutate: createComment } = useMutation({
 		mutationKey: ["createVideoComment", videoId, user],
 		mutationFn: async (commentText: string) => {
 			if (!user || !videoId || !commentText.trim()) return;
@@ -27,25 +37,16 @@ export const CommentsSection: FC<CommentsSectionProps> = ({
 		onError: (error) => {
 			toast.error(`Failed to create comment: ${error}`);
 		},
-	});
-
-	const { data: comments, refetch: refetchComments } = useQuery({
-		queryKey: ["videoComments", videoId, user],
-		queryFn: async () => {
-			if (!user || !videoId) return [];
-			const paginated = await getVideoComments(user, videoId);
-			return paginated.items || [];
-		},
-		retry: 2,
+    onSuccess: async () => {
+      await refetchComments();
+    },
 	});
 
 	const onCreateComment = useCallback(
 		async (e: React.FormEvent) => {
 			e.preventDefault();
 			if (!comment.trim()) return;
-
 			await createComment(comment.trim());
-			await refetchComments();
 			setComment("");
 		},
 		[comment, setComment, refetchComments],
